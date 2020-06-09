@@ -13,7 +13,6 @@ public class PlayerInfo : MonoBehaviour
 
     public int CurrentLap { get; set; }
 
-    // ??
     public int Color { get; set; }
 
     public override string ToString()

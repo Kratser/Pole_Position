@@ -13,7 +13,7 @@ public class SetupPlayer : NetworkBehaviour
 {
     [SyncVar] private int m_ID;
     [SyncVar] private string m_Name;
-    [SyncVar] private string m_Color;
+    [SyncVar] private int m_Color;
 
     private UIManager m_UIManager;
     private NetworkManager m_NetworkManager;
@@ -62,8 +62,13 @@ public class SetupPlayer : NetworkBehaviour
     public void ChangeName()
     {
         m_PlayerInfo.Name = m_UIManager.PlayerUserName;
+        m_Name = m_UIManager.PlayerUserName;
         // Hacer que el nombre aparezca sobre el jugador
-        m_PlayerController.PlayerName.text = m_PlayerInfo.Name;
+        if (isLocalPlayer)
+        {
+            m_PlayerController.PlayerName.text = m_Name;
+        }
+            
     }
 
     /// <summary>
@@ -71,19 +76,21 @@ public class SetupPlayer : NetworkBehaviour
     /// </summary>
     public void ChangeColor()
     {
-        if (color == 3)
+        
+        if (m_Color == 3)
         {
-            color = 0;
+            m_Color = 0;
         }
         else
         {
-            color++;
+            m_Color++;
         }
         if (isLocalPlayer)
         {
-            m_PlayerInfo.Color = color;
-            this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[color].GetComponent<MeshRenderer>().sharedMaterials;          
+            
+            this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[m_Color].GetComponent<MeshRenderer>().sharedMaterials;          
         }
+        m_PlayerInfo.Color = m_Color;
     }
 
     /// <summary>

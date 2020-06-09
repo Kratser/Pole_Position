@@ -140,6 +140,8 @@ public class PlayerController : NetworkBehaviour
         // Nombre del jugador que aparece sobre su coche. Cambiamos posiciones con respecto a la cámara.
         Vector3 namePos = Camera.main.WorldToScreenPoint(this.transform.position);
         PlayerName.transform.position = namePos + new Vector3(0, 55, 0);
+
+        //Color del jugador
     }
 
     #endregion
