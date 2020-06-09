@@ -184,6 +184,7 @@ MonoBehaviour:
   - {fileID: 4206998393235348174, guid: 938563b2446909d4499d7eb9c32e6c16, type: 3}
   - {fileID: 8425518617769884463, guid: 045b7521ffa915d42ae44a089a0dbe26, type: 3}
   - {fileID: 3927798965206565936, guid: 8039ebd05d9e8c84891da61a390f1ec7, type: 3}
+  color: 0
 --- !u!114 &3466774584401487325
 MonoBehaviour:
   m_ObjectHideFlags: 0

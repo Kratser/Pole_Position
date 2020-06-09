@@ -78,7 +78,10 @@ public class SetupPlayer : NetworkBehaviour
         {
             color++;
         }
-        this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[color].GetComponent<MeshRenderer>().sharedMaterials;
+        if (isLocalPlayer)
+        {
+            this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[color].GetComponent<MeshRenderer>().sharedMaterials;
+        }
     }
 
     /// <summary>
