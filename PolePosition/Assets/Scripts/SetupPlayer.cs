@@ -47,7 +47,7 @@ public class SetupPlayer : NetworkBehaviour
         // m_PlayerInfo.Name = "Player" + m_ID;
         m_PlayerInfo.CurrentLap = 0;
 
-        m_UIManager.readyButton.onClick.AddListener(()=>ChangeName());
+        m_UIManager.readyButton.onClick.AddListener(() => ChangeName());
 
         //Cambiar el color del jugador
         m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
@@ -78,9 +78,7 @@ public class SetupPlayer : NetworkBehaviour
         {
             color++;
         }
-        //this.transform.Find("raceCarRed/body").gameObject.GetComponent<MeshRenderer>()= raceCarColors[color].GetComponent<MeshRenderer>();
-        MeshRenderer variable = this.transform.Find("raceCarRed/body").gameObject.GetComponent<MeshRenderer>();
-        variable.materials = raceCarColors[color].GetComponent<MeshRenderer>().materials;
+        this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[color].GetComponent<MeshRenderer>().sharedMaterials;
     }
 
     /// <summary>
@@ -117,7 +115,7 @@ public class SetupPlayer : NetworkBehaviour
     // Actualización del UI de la velocidad CAMBIAR!!!
     void OnSpeedChangeEventHandler(float speed)
     {
-        m_UIManager.UpdateSpeed((int) speed * 5); // 5 for visualization purpose (km/h)
+        m_UIManager.UpdateSpeed((int)speed * 5); // 5 for visualization purpose (km/h)
     }
 
     void ConfigureCamera()
