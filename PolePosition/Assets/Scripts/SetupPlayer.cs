@@ -20,7 +20,8 @@ public class SetupPlayer : NetworkBehaviour
     private PlayerInfo m_PlayerInfo;
     private PolePositionManager m_PolePositionManager;
 
-    public Material[] raceCarMaterials = new Material[4];
+    public GameObject[] raceCarColors = new GameObject[4];
+    public int color = 0;
 
     #region Start & Stop Callbacks
 
@@ -49,7 +50,7 @@ public class SetupPlayer : NetworkBehaviour
         m_UIManager.readyButton.onClick.AddListener(()=>ChangeName());
 
         //Cambiar el color del jugador
-        //this.transform.GetChild(0).gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().materials[2] = 
+        m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
 
         m_PolePositionManager.AddPlayer(m_PlayerInfo);
     }
@@ -62,6 +63,24 @@ public class SetupPlayer : NetworkBehaviour
         m_PlayerInfo.Name = m_UIManager.PlayerUserName;
         // Hacer que el nombre aparezca sobre el jugador
         m_PlayerController.PlayerName.text = m_PlayerInfo.Name;
+    }
+
+    /// <summary>
+    /// Actualizar el color del coche
+    /// </summary>
+    public void ChangeColor()
+    {
+        if (color == 3)
+        {
+            color = 0;
+        }
+        else
+        {
+            color++;
+        }
+        //this.transform.Find("raceCarRed/body").gameObject.GetComponent<MeshRenderer>()= raceCarColors[color].GetComponent<MeshRenderer>();
+        MeshRenderer variable = this.transform.Find("raceCarRed/body").gameObject.GetComponent<MeshRenderer>();
+        variable.materials = raceCarColors[color].GetComponent<MeshRenderer>().materials;
     }
 
     /// <summary>

@@ -18,7 +18,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private InputField inputFieldIP;
 
     [Header("Select Menu")] [SerializeField] private GameObject selectMenu;
-    [SerializeField] private Button changeColorButton;
+    [SerializeField] public Button changeColorButton;
     [SerializeField] public Button readyButton;
     [SerializeField] private InputField inputFieldName;
     [SerializeField] public string PlayerUserName { get; set; }
