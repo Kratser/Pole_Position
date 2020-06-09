@@ -13,6 +13,7 @@ public class SetupPlayer : NetworkBehaviour
 {
     [SyncVar] private int m_ID;
     [SyncVar] private string m_Name;
+    [SyncVar] private string m_Color;
 
     private UIManager m_UIManager;
     private NetworkManager m_NetworkManager;
@@ -80,7 +81,8 @@ public class SetupPlayer : NetworkBehaviour
         }
         if (isLocalPlayer)
         {
-            this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[color].GetComponent<MeshRenderer>().sharedMaterials;
+            m_PlayerInfo.Color = color;
+            this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[color].GetComponent<MeshRenderer>().sharedMaterials;          
         }
     }
 
