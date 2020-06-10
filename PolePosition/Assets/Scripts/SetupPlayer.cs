@@ -27,25 +27,6 @@ public class SetupPlayer : NetworkBehaviour
 
     #region NAME
 
-    [Command]
-    private void CmdNameToServer(string name)
-    {
-        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-        m_Name = name;
-        m_UIManager.PlayerUserName = m_Name;
-    }
-
-    /// <summary>
-    /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
-    /// The Hook is always called after the property value is set. You don't need to set it yourself.
-    /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
-    /// </summary>
-    /// <param name="oldColor"></param>
-    /// <param name="newColor"></param>
-    public void SetName(int oldColor, int newColor)
-    {
-    }
-
     /// <summary>
     /// Actualizar el nombre sobre el coche con el nombre introducido por este
     /// </summary>
@@ -54,31 +35,68 @@ public class SetupPlayer : NetworkBehaviour
         if (isLocalPlayer)
         {
             m_PlayerInfo.Name = m_UIManager.PlayerUserName;
-            // m_Name = m_UIManager.PlayerUserName;
-            // Hacer que el nombre aparezca sobre el jugador
-            m_PlayerController.PlayerName.text = m_PlayerInfo.Name;
+            
             CmdNameToServer(m_PlayerInfo.Name);
         }
-        m_PlayerInfo.Name = m_Name;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="name"></param>
+    [Command]
+    private void CmdNameToServer(string name)
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_Name = name;
+    }
+
+    /// <summary>
+    /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
+    /// The Hook is always called after the property value is set. You don't need to set it yourself.
+    /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
+    /// </summary>
+    /// <param name="oldName"></param>
+    /// <param name="newName"></param>
+    public void SetName(string oldName, string newName)
+    {
+        // Hacer que el nombre aparezca sobre el jugador
+        m_PlayerController.PlayerName.text = newName;
     }
 
     #endregion
 
     #region COLOR
 
+    /// <summary>
+    /// Mediante un botón de la interfaz, vamos cambiando el color del coche
+    /// </summary>
+    public void ChangeColor()
+    {
+        if (isLocalPlayer)
+        {
+            if (m_PlayerInfo.Color == 3)
+            {
+                m_PlayerInfo.Color = 0;
+            }
+            else
+            {
+                m_PlayerInfo.Color++;
+            }
+            CmdColorToServer(m_PlayerInfo.Color);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="color"></param>
     [Command]
     private void CmdColorToServer(int color)
     {
         GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-        if (m_PlayerInfo.Color == 3)
-        {
-            m_PlayerInfo.Color = 0;
-        }
-        else
-        {
-            m_PlayerInfo.Color++;
-        }
-        m_Color = m_PlayerInfo.Color;
+        
+        m_Color = color;
     }
 
     /// <summary>
@@ -91,17 +109,6 @@ public class SetupPlayer : NetworkBehaviour
     public void SetColor(int oldColor, int newColor)
     {
         this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[newColor].GetComponent<MeshRenderer>().sharedMaterials;
-    }
-
-    /// <summary>
-    /// Mediante un botón de la interfaz, vamos cambiando el color del coche
-    /// </summary>
-    public void ChangeColor()
-    {
-        if (isLocalPlayer)
-        {
-            CmdColorToServer(m_PlayerInfo.Color);
-        }
     }
 
     #endregion
