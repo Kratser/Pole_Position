@@ -12,8 +12,10 @@ using UnityEngine.UI;
 public class SetupPlayer : NetworkBehaviour
 {
     [SyncVar] private int m_ID;
-    [SyncVar] private string m_Name;
-    [SyncVar] private int m_Color;
+
+    // The hook attribute can be used to specify a function to be called when the SyncVar changes value on the client.
+    [SyncVar(hook = nameof(SetName))] private string m_Name;
+    [SyncVar(hook = nameof(SetColor))] private int m_Color;
 
     private UIManager m_UIManager;
     private NetworkManager m_NetworkManager;
@@ -22,7 +24,87 @@ public class SetupPlayer : NetworkBehaviour
     private PolePositionManager m_PolePositionManager;
 
     public GameObject[] raceCarColors = new GameObject[4];
-    public int color = 0;
+
+    #region NAME
+
+    [Command]
+    private void CmdNameToServer(string name)
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_Name = name;
+        m_UIManager.PlayerUserName = m_Name;
+    }
+
+    /// <summary>
+    /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
+    /// The Hook is always called after the property value is set. You don't need to set it yourself.
+    /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
+    /// </summary>
+    /// <param name="oldColor"></param>
+    /// <param name="newColor"></param>
+    public void SetName(int oldColor, int newColor)
+    {
+    }
+
+    /// <summary>
+    /// Actualizar el nombre sobre el coche con el nombre introducido por este
+    /// </summary>
+    public void ChangeName()
+    {
+        if (isLocalPlayer)
+        {
+            m_PlayerInfo.Name = m_UIManager.PlayerUserName;
+            // m_Name = m_UIManager.PlayerUserName;
+            // Hacer que el nombre aparezca sobre el jugador
+            m_PlayerController.PlayerName.text = m_PlayerInfo.Name;
+            CmdNameToServer(m_PlayerInfo.Name);
+        }
+        m_PlayerInfo.Name = m_Name;
+    }
+
+    #endregion
+
+    #region COLOR
+
+    [Command]
+    private void CmdColorToServer(int color)
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        if (m_PlayerInfo.Color == 3)
+        {
+            m_PlayerInfo.Color = 0;
+        }
+        else
+        {
+            m_PlayerInfo.Color++;
+        }
+        m_Color = m_PlayerInfo.Color;
+    }
+
+    /// <summary>
+    /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
+    /// The Hook is always called after the property value is set. You don't need to set it yourself.
+    /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
+    /// </summary>
+    /// <param name="oldColor"></param>
+    /// <param name="newColor"></param>
+    public void SetColor(int oldColor, int newColor)
+    {
+        this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[newColor].GetComponent<MeshRenderer>().sharedMaterials;
+    }
+
+    /// <summary>
+    /// Mediante un botón de la interfaz, vamos cambiando el color del coche
+    /// </summary>
+    public void ChangeColor()
+    {
+        if (isLocalPlayer)
+        {
+            CmdColorToServer(m_PlayerInfo.Color);
+        }
+    }
+
+    #endregion
 
     #region Start & Stop Callbacks
 
@@ -49,48 +131,9 @@ public class SetupPlayer : NetworkBehaviour
         m_PlayerInfo.CurrentLap = 0;
 
         m_UIManager.readyButton.onClick.AddListener(() => ChangeName());
-
-        //Cambiar el color del jugador
         m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
 
         m_PolePositionManager.AddPlayer(m_PlayerInfo);
-    }
-
-    /// <summary>
-    /// Actualizar el nombre sobre el coche con el nombre introducido por este
-    /// </summary>
-    public void ChangeName()
-    {
-        m_PlayerInfo.Name = m_UIManager.PlayerUserName;
-        m_Name = m_UIManager.PlayerUserName;
-        // Hacer que el nombre aparezca sobre el jugador
-        if (isLocalPlayer)
-        {
-            m_PlayerController.PlayerName.text = m_Name;
-        }
-            
-    }
-
-    /// <summary>
-    /// Actualizar el color del coche
-    /// </summary>
-    public void ChangeColor()
-    {
-        
-        if (m_Color == 3)
-        {
-            m_Color = 0;
-        }
-        else
-        {
-            m_Color++;
-        }
-        if (isLocalPlayer)
-        {
-            
-            this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[m_Color].GetComponent<MeshRenderer>().sharedMaterials;          
-        }
-        m_PlayerInfo.Color = m_Color;
     }
 
     /// <summary>
@@ -102,6 +145,8 @@ public class SetupPlayer : NetworkBehaviour
     }
 
     #endregion
+
+    #region START
 
     private void Awake()
     {
@@ -123,6 +168,8 @@ public class SetupPlayer : NetworkBehaviour
             ConfigureCamera();
         }
     }
+
+    #endregion
 
     // Actualización del UI de la velocidad CAMBIAR!!!
     void OnSpeedChangeEventHandler(float speed)
