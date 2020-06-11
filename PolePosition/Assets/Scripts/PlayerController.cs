@@ -140,8 +140,6 @@ public class PlayerController : NetworkBehaviour
         // Nombre del jugador que aparece sobre su coche. Cambiamos posiciones con respecto a la cámara.
         Vector3 namePos = Camera.main.WorldToScreenPoint(this.transform.position);
         PlayerName.transform.position = namePos + new Vector3(0, 55, 0);
-
-        //Color del jugador
     }
 
     #endregion
@@ -169,6 +167,7 @@ public class PlayerController : NetworkBehaviour
                 var howMuchSlip = (wheelHitRight.forwardSlip - slipLimit) / (1 - slipLimit);
                 axleInfo.rightWheel.motorTorque -= axleInfo.rightWheel.motorTorque * howMuchSlip * slipLimit;
             }
+            //axleInfo.leftWheel.sidewaysFriction.extremumSlip
         }
     }
 

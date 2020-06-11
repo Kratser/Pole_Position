@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using Mirror;
 using UnityEngine;
 
@@ -13,6 +14,9 @@ public class PolePositionManager : NetworkBehaviour
     private readonly List<PlayerInfo> m_Players = new List<PlayerInfo>(4);
     private CircuitController m_CircuitController;
     private GameObject[] m_DebuggingSpheres;
+    //Barrera de seleccion de color de coche y nombre de usuario
+    public Semaphore PlayersNotReadyBarrier = new Semaphore(0, 4);
+    [SyncVar] public int numPlayersReady; 
 
     private void Awake()
     {
@@ -38,6 +42,18 @@ public class PolePositionManager : NetworkBehaviour
     public void AddPlayer(PlayerInfo player)
     {
         m_Players.Add(player);
+        numPlayers++;
+        
+    }
+
+    [Command]
+    public void CmdNewPlayerReady()
+    {
+        numPlayersReady++;
+        if (numPlayersReady == numPlayers)
+        {
+            PlayersNotReadyBarrier.Release(numPlayers);
+        }
     }
 
     private class PlayerInfoComparer : Comparer<PlayerInfo>

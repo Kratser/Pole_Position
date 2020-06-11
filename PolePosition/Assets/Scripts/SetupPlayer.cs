@@ -3,6 +3,7 @@ using Mirror;
 using UnityEngine;
 using Random = System.Random;
 using UnityEngine.UI;
+using System.Threading;
 
 /*
 	Documentation: https://mirror-networking.com/docs/Guides/NetworkBehaviour.html
@@ -37,6 +38,11 @@ public class SetupPlayer : NetworkBehaviour
             m_PlayerInfo.Name = m_UIManager.PlayerUserName;
             
             CmdNameToServer(m_PlayerInfo.Name);
+
+            if (m_PlayerInfo.Name.Length != 0)
+            {
+                m_PolePositionManager.CmdNewPlayerReady();
+            }
         }
     }
 
@@ -62,6 +68,7 @@ public class SetupPlayer : NetworkBehaviour
     {
         // Hacer que el nombre aparezca sobre el jugador
         m_PlayerController.PlayerName.text = newName;
+        m_PlayerInfo.Name = newName;
     }
 
     #endregion
@@ -109,6 +116,7 @@ public class SetupPlayer : NetworkBehaviour
     public void SetColor(int oldColor, int newColor)
     {
         this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[newColor].GetComponent<MeshRenderer>().sharedMaterials;
+        m_PlayerInfo.Color = newColor;
     }
 
     #endregion
@@ -140,7 +148,9 @@ public class SetupPlayer : NetworkBehaviour
         m_UIManager.readyButton.onClick.AddListener(() => ChangeName());
         m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
 
+        //Añadir jugador a la partida y a la barrera de inicio de partida
         m_PolePositionManager.AddPlayer(m_PlayerInfo);
+         
     }
 
     /// <summary>
@@ -170,12 +180,21 @@ public class SetupPlayer : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
-            m_PlayerController.enabled = true;
-            m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
             ConfigureCamera();
+
+            new Thread(() => WaitPlayersReady()).Start();
         }
     }
 
+    public void WaitPlayersReady()
+    {
+        // Barrera para esperar a que todos los jugadores estén listos.
+        m_PolePositionManager.PlayersNotReadyBarrier.WaitOne();
+        //Cuando todos estan listos: Cuenta atrás para empezar  3 ....   2 .... 1 ..... lets goo!!
+
+        m_PlayerController.enabled = true;
+        m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
+    }
     #endregion
 
     // Actualización del UI de la velocidad CAMBIAR!!!
