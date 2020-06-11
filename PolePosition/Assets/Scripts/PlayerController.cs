@@ -73,6 +73,10 @@ public class PlayerController : NetworkBehaviour
 
     public void Update()
     {
+        if (!m_PlayerInfo.IsReady)
+        {
+            return;
+        }
         //InputAcceleration = Input.GetAxis("Vertical");
         //InputSteering = Input.GetAxis("Horizontal");
         //InputBrake = Input.GetAxis("Jump");
@@ -81,6 +85,11 @@ public class PlayerController : NetworkBehaviour
 
     public void FixedUpdate()
     {
+        if (!m_PlayerInfo.IsReady)
+        {
+            return;
+        }
+
         InputAcceleration = Mathf.Clamp(Input.GetAxis("Vertical"), -1, 1);
         InputSteering = Mathf.Clamp(Input.GetAxis("Horizontal"), -1, 1);
         InputBrake = Mathf.Clamp(Input.GetAxis("Jump"), 0, 1);

@@ -36,12 +36,12 @@ public class SetupPlayer : NetworkBehaviour
         if (isLocalPlayer)
         {
             m_PlayerInfo.Name = m_UIManager.PlayerUserName;
-            
+
             CmdNameToServer(m_PlayerInfo.Name);
 
-            if (m_PlayerInfo.Name.Length != 0)
+            if (m_PlayerInfo.Name != null)
             {
-                m_PolePositionManager.CmdNewPlayerReady();
+                CmdNewPlayerReady();
             }
         }
     }
@@ -172,7 +172,6 @@ public class SetupPlayer : NetworkBehaviour
         m_NetworkManager = FindObjectOfType<NetworkManager>();
         m_PolePositionManager = FindObjectOfType<PolePositionManager>();
         m_UIManager = FindObjectOfType<UIManager>();
-        //raceCarMaterials[0] = find
     }
 
     // Start is called before the first frame update
@@ -181,8 +180,12 @@ public class SetupPlayer : NetworkBehaviour
         if (isLocalPlayer)
         {
             ConfigureCamera();
+            m_PlayerInfo.IsReady = false;
+            Thread esperarJugadores = new Thread(() => WaitPlayersReady());
+            esperarJugadores.Start();
 
-            new Thread(() => WaitPlayersReady()).Start();
+            m_PlayerController.enabled = true;
+            m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
         }
     }
 
@@ -191,10 +194,18 @@ public class SetupPlayer : NetworkBehaviour
         // Barrera para esperar a que todos los jugadores estén listos.
         m_PolePositionManager.PlayersNotReadyBarrier.WaitOne();
         //Cuando todos estan listos: Cuenta atrás para empezar  3 ....   2 .... 1 ..... lets goo!!
+        m_PolePositionManager.countDown.Wait();
 
-        m_PlayerController.enabled = true;
-        m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
+        m_PlayerInfo.IsReady = true;
     }
+
+    [Command]
+    public void CmdNewPlayerReady()
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_PolePositionManager.numPlayersReady++;
+    }
+
     #endregion
 
     // Actualización del UI de la velocidad CAMBIAR!!!

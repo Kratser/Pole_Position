@@ -8,19 +8,25 @@ using UnityEngine;
 
 public class PolePositionManager : NetworkBehaviour
 {
+
     public int numPlayers;
     public NetworkManager networkManager;
+    public UIManager uiManager;
 
     private readonly List<PlayerInfo> m_Players = new List<PlayerInfo>(4);
     private CircuitController m_CircuitController;
     private GameObject[] m_DebuggingSpheres;
     //Barrera de seleccion de color de coche y nombre de usuario
     public Semaphore PlayersNotReadyBarrier = new Semaphore(0, 4);
-    [SyncVar] public int numPlayersReady; 
+    [SyncVar(hook = nameof(checkPlayersReady))] public int numPlayersReady;
+
+    public CountdownEvent countDown = new CountdownEvent(3);
 
     private void Awake()
     {
         if (networkManager == null) networkManager = FindObjectOfType<NetworkManager>();
+        if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
+
         if (m_CircuitController == null) m_CircuitController = FindObjectOfType<CircuitController>();
 
         m_DebuggingSpheres = new GameObject[networkManager.maxConnections];
@@ -46,14 +52,40 @@ public class PolePositionManager : NetworkBehaviour
         
     }
 
-    [Command]
-    public void CmdNewPlayerReady()
+    public void checkPlayersReady(int oldPlayersReady, int newPlayersReady)
     {
-        numPlayersReady++;
-        if (numPlayersReady == numPlayers)
+        Debug.Log(numPlayersReady);
+        if ((newPlayersReady == numPlayers) /*&& (numPlayers >= 2)*/)
         {
-            PlayersNotReadyBarrier.Release(numPlayers);
+            PlayersNotReadyBarrier.Release(newPlayersReady);
+            RpcStartCountDown();
         }
+    }
+
+    [ClientRpc]
+    public void RpcStartCountDown()
+    {
+        new Thread(() => CountDown()).Start();
+    }
+
+    public void CountDown()
+    {
+        Debug.Log("3!");
+        
+        Thread.Sleep(1000);
+        countDown.Signal();
+        Debug.Log("2!");
+        
+        Thread.Sleep(1000);
+        countDown.Signal();
+        Debug.Log("1!");
+        
+        Thread.Sleep(1000);
+        countDown.Signal();
+        Debug.Log("GO!");
+        
+        Thread.Sleep(1000);
+        
     }
 
     private class PlayerInfoComparer : Comparer<PlayerInfo>

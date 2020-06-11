@@ -31,6 +31,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text textSpeed;
     [SerializeField] private Text textLaps;
     [SerializeField] private Text textPosition;
+    [SerializeField] public Text textCountDown;
 
     private void Awake()
     {

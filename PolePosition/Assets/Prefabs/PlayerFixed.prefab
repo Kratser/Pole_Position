@@ -81,7 +81,7 @@ GameObject:
   - component: {fileID: 6346869062069434778}
   - component: {fileID: 2697569808015383802}
   m_Layer: 0
-  m_Name: Player - copia
+  m_Name: PlayerFixed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -184,7 +184,6 @@ MonoBehaviour:
   - {fileID: 4206998393235348174, guid: 938563b2446909d4499d7eb9c32e6c16, type: 3}
   - {fileID: 8425518617769884463, guid: 045b7521ffa915d42ae44a089a0dbe26, type: 3}
   - {fileID: 3927798965206565936, guid: 8039ebd05d9e8c84891da61a390f1ec7, type: 3}
-  color: 0
 --- !u!114 &3466774584401487325
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -512,7 +511,7 @@ Transform:
   m_LocalPosition: {x: 0, y: -0.34997404, z: 0.025937319}
   m_LocalScale: {x: 1, y: 1, z: -1}
   m_Children:
-  - {fileID: 3262157411600739802}
+  - {fileID: 640580582969050166}
   - {fileID: 402193092883154427}
   - {fileID: 2615011713919003219}
   - {fileID: 214698561802220239}
@@ -1045,7 +1044,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b5e7626968d13934f8709da10045f833, type: 3}
---- !u!4 &3262157411600739802 stripped
+--- !u!4 &640580582969050166 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2712941882291038473, guid: b5e7626968d13934f8709da10045f833,
     type: 3}

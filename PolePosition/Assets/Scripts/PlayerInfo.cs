@@ -15,6 +15,7 @@ public class PlayerInfo : MonoBehaviour
 
     public int Color { get; set; }
 
+    public bool IsReady { get; set; }
     public override string ToString()
     {
         return Name;
