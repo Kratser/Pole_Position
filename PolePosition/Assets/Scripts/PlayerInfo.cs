@@ -11,6 +11,8 @@ public class PlayerInfo : MonoBehaviour
 
     public int CurrentPosition { get; set; }
 
+    public float TotalDistance { set; get; }
+
     public int CurrentLap { get; set; }
 
     public int Color { get; set; }

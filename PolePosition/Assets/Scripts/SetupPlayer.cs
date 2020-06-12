@@ -4,6 +4,7 @@ using UnityEngine;
 using Random = System.Random;
 using UnityEngine.UI;
 using System.Threading;
+using System.Threading.Tasks;
 
 /*
 	Documentation: https://mirror-networking.com/docs/Guides/NetworkBehaviour.html
@@ -25,6 +26,13 @@ public class SetupPlayer : NetworkBehaviour
     private PolePositionManager m_PolePositionManager;
 
     public GameObject[] raceCarColors = new GameObject[4];
+
+    [Command]
+    public void CmdNewPlayerReady()
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_PolePositionManager.numPlayersReady++;
+    }
 
     #region NAME
 
@@ -181,8 +189,7 @@ public class SetupPlayer : NetworkBehaviour
         {
             ConfigureCamera();
             m_PlayerInfo.IsReady = false;
-            Thread esperarJugadores = new Thread(() => WaitPlayersReady());
-            esperarJugadores.Start();
+            new Task(() => WaitPlayersReady()).Start();
 
             m_PlayerController.enabled = true;
             m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
@@ -196,14 +203,9 @@ public class SetupPlayer : NetworkBehaviour
         //Cuando todos estan listos: Cuenta atrás para empezar  3 ....   2 .... 1 ..... lets goo!!
         m_PolePositionManager.countDown.Wait();
 
+        //m_PlayerController.enabled = true;
+        //m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
         m_PlayerInfo.IsReady = true;
-    }
-
-    [Command]
-    public void CmdNewPlayerReady()
-    {
-        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-        m_PolePositionManager.numPlayersReady++;
     }
 
     #endregion

@@ -46,11 +46,6 @@ public class UIManager : MonoBehaviour
         ActivateMainMenu();
     }
 
-    public void UpdateSpeed(int speed)
-    {
-        textSpeed.text = "Speed " + speed + " Km/h";
-    }
-
     private void ActivateMainMenu()
     {
         mainMenu.SetActive(true);
@@ -135,4 +130,28 @@ public class UIManager : MonoBehaviour
     {
         m_NetworkManager.StartServer();
     }
+
+    #region UI Delegates
+
+    public void UpdateSpeed(int speed)
+    {
+        textSpeed.text = "Speed " + speed + " Km/h";
+    }
+
+    public void ChangeOrder(string newOrder)
+    {
+        textPosition.text = newOrder;
+    }
+
+    public void CountDown(string time)
+    {
+        textCountDown.text = time;
+    }
+
+    public void UpdateLap (string laps)
+    {
+        textLaps.text = laps;  
+    }
+
+    #endregion
 }
