@@ -37,8 +37,10 @@ public class UIManager : MonoBehaviour
 
     [Header("Ranking")] [SerializeField] private GameObject rankingHUD;
     [SerializeField] private Button exitButton;
-    [SerializeField] private Text testRank;
+    [SerializeField] private Text textRanking;
+    [SerializeField] private Text textTimes;
     [SerializeField] private Text textFinish;
+    [SerializeField] private Text textWaitingPlayers;
 
     private void Awake()
     {
@@ -171,9 +173,33 @@ public class UIManager : MonoBehaviour
 
     public void WrongDirection(string msg)
     {
+        textCountDown.fontSize = 45;
         textCountDown.text = msg;
         Thread.Sleep(500);
         textCountDown.text = "";
+        textCountDown.fontSize = 100;
+    }
+
+    public void ChangeRankingHUD(string[] positions, string[] times)
+    {
+        textFinish.fontSize = 80;
+        textFinish.text = "Ranking";
+        exitButton.gameObject.SetActive(true);
+        textWaitingPlayers.gameObject.SetActive(false);
+        textRanking.gameObject.SetActive(true);
+        textTimes.gameObject.SetActive(true);
+
+        string positionsText = "";
+        string timesText = "";
+        for (int i = 0; i < positions.Length; i++)
+        {
+            positionsText += (i+1)+"# "+positions[i];
+            timesText += times[i];
+            positionsText += "\n" + "\n";
+            timesText += "\n" + "\n";
+        }
+        textRanking.text = positionsText;
+        textTimes.text = timesText;
     }
 
     #endregion

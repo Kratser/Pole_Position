@@ -27,7 +27,9 @@ public class PolePositionManager : NetworkBehaviour
     private GameObject[] m_DebuggingSpheres;
     //Barrera de seleccion de color de coche y nombre de usuario
     public Semaphore PlayersNotReadyBarrier = new Semaphore(0, 4);
+
     [SyncVar(hook = nameof(CheckPlayersReady))] public int numPlayersReady;
+    public int numPlayersFinished;
 
     public CountdownEvent countDown = new CountdownEvent(3);
 
@@ -141,11 +143,24 @@ public class PolePositionManager : NetworkBehaviour
         for (int i = 0; i < m_Players.Count; i++)
         {
             myRaceOrder += i+1 + ". " + m_Players[i].Name + "\n";
-            //myRaceOrder += "["+m_Players[i].ID+"] - "+m_Players[i].Name +": "+arcLengths[m_Players[i].ID] +"\n";
         }
         new Task(() => OnOrderChangeDelegate(myRaceOrder)).Start();
         //OnOrderChangeDelegate(myRaceOrder);
         Debug.Log("El orden de carrera es: " + myRaceOrder);
+
+        if (numPlayersFinished == numPlayers-1 && numPlayers > 1)
+        {
+            // Cambiar HUD
+            string[] positions = new string[numPlayers];
+            string[] times = new string[numPlayers];
+            for (int i = 0; i < m_Players.Count; i++)
+            {
+                positions[i] = m_Players[m_Players[i].ID].Name;
+                times[i] = m_Players[m_Players[i].ID].FinishTime.ToString();
+            }
+            uiManager.ActivateRankingHUD();
+            uiManager.ChangeRankingHUD(positions, times);
+        }
     }
 
     float ComputeCarArcLength(int ID)
@@ -165,11 +180,20 @@ public class PolePositionManager : NetworkBehaviour
         this.m_DebuggingSpheres[ID].transform.position = carProj;
 
         float distance = minArcL - m_Players[ID].TotalDistance;
+
+        CheckLaps(ID, distance, minArcL);
+
+        Debug.Log(m_Players[ID].CurrentLap);
+        return minArcL;
+    }
+
+    public void CheckLaps(int ID, float distance, float minArcL)
+    {
         /**/
         // Vuelta hacia atrás
         if (distance > 300)
         {
-            m_Players[ID].CurrentLap--;            
+            m_Players[ID].CurrentLap--;
             // Para que no empiece en una vuelta menor que 0, y que no se puedan acumular vueltas negativas
             if (m_Players[ID].CurrentLap < 0)
             {
@@ -186,11 +210,13 @@ public class PolePositionManager : NetworkBehaviour
         else if (distance < -300)
         {
             m_Players[ID].CurrentLap++;
-            
+
             //Acabar partida para cada jugador
-            if (m_Players[ID].CurrentLap == 4)
+            if ((m_Players[ID].CurrentLap == 4) || (numPlayersFinished == numPlayers-1))
             {
+
                 m_Players[ID].FinishTime = Time.time - m_Players[ID].StartTime;
+                numPlayersFinished++;
 
                 if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
                 {
@@ -199,7 +225,6 @@ public class PolePositionManager : NetworkBehaviour
                     //esperar al resto de players para mostrar ranqueen
                     Debug.Log(m_Players[ID].FinishTime);
                 }
-                
             }
 
             // !!!!! HA DE CAMBIARSE LA VUELTA MAX
@@ -208,22 +233,20 @@ public class PolePositionManager : NetworkBehaviour
                 new Task(() => OnUpdateLapDelegate(m_Players[ID].CurrentLap.ToString())).Start();
             }
             m_Players[ID].TotalDistance = minArcL;
+            distance = minArcL;
         }
         else
         {
             m_Players[ID].TotalDistance += distance;
         }
 
-        if(distance < 0 && uiManager.textCountDown.text == "" && distance > -300)
+        if (distance < -0.3 && uiManager.textCountDown.text == "")
         {
             if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
             {
                 new Task(() => OnWrongDirectionDelegate("Wrong direction! T^T")).Start();
             }
         }
-
         /**/
-        Debug.Log(m_Players[ID].CurrentLap);
-        return minArcL;
     }
 }
