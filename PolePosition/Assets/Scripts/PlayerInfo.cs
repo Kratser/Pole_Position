@@ -17,6 +17,9 @@ public class PlayerInfo : MonoBehaviour
 
     public int Color { get; set; }
 
+    public float StartTime { get; set; }
+    public float FinishTime { get; set; }
+
     public bool IsReady { get; set; }
     public override string ToString()
     {

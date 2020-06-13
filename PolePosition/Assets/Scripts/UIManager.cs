@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using Mirror;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,6 +34,12 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text textPosition;
     [SerializeField] public Text textCountDown;
 
+
+    [Header("Ranking")] [SerializeField] private GameObject rankingHUD;
+    [SerializeField] private Button exitButton;
+    [SerializeField] private Text testRank;
+    [SerializeField] private Text textFinish;
+
     private void Awake()
     {
         m_NetworkManager = FindObjectOfType<NetworkManager>();
@@ -63,7 +70,11 @@ public class UIManager : MonoBehaviour
         mainMenu.SetActive(false);
         selectMenu.SetActive(true);
     }
-
+    public void ActivateRankingHUD()
+    {
+        rankingHUD.SetActive(true);
+        inGameHUD.SetActive(false);
+    }
     /// <summary>
     /// Comienza la partida (cuando estén todos listos)
     /// </summary>
@@ -150,7 +161,19 @@ public class UIManager : MonoBehaviour
 
     public void UpdateLap (string laps)
     {
-        textLaps.text = laps;  
+        textLaps.text = "LAP: " + laps + "/ 3";
+        textCountDown.fontSize = 45;
+        textCountDown.text = "LAP: " + laps + "/3";
+        Thread.Sleep(1500);
+        textCountDown.text = "";
+        textCountDown.fontSize = 100;
+    }
+
+    public void WrongDirection(string msg)
+    {
+        textCountDown.text = msg;
+        Thread.Sleep(500);
+        textCountDown.text = "";
     }
 
     #endregion

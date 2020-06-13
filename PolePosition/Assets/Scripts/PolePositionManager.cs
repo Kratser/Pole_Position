@@ -10,8 +10,6 @@ using UnityEngine;
 
 public class PolePositionManager : NetworkBehaviour
 {
-    
-
     public int numPlayers;
     public NetworkManager networkManager;
     public UIManager uiManager;
@@ -21,6 +19,8 @@ public class PolePositionManager : NetworkBehaviour
     public OnUIChangeEvent OnOrderChangeDelegate;
     public OnUIChangeEvent OnCountDownDelegate;
     public OnUIChangeEvent OnUpdateLapDelegate;
+    public OnUIChangeEvent OnWrongDirectionDelegate;
+
 
     private readonly List<PlayerInfo> m_Players = new List<PlayerInfo>(4);
     private CircuitController m_CircuitController;
@@ -36,9 +36,11 @@ public class PolePositionManager : NetworkBehaviour
         if (networkManager == null) networkManager = FindObjectOfType<NetworkManager>();
         if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
 
+        //DELEGADOS DE UI
         OnOrderChangeDelegate += uiManager.ChangeOrder;
         OnCountDownDelegate += uiManager.CountDown;
         OnUpdateLapDelegate += uiManager.UpdateLap;
+        OnWrongDirectionDelegate += uiManager.WrongDirection;
 
         if (m_CircuitController == null) m_CircuitController = FindObjectOfType<CircuitController>();
 
@@ -78,10 +80,11 @@ public class PolePositionManager : NetworkBehaviour
     [ClientRpc]
     public void RpcStartCountDown()
     {
-        new Task(() => CountDown()).Start();
+        float startTime = Time.time;
+        new Task(() => CountDown(startTime)).Start();
     }
 
-    public void CountDown()
+    public void CountDown(float time)
     {
         Debug.Log("3!");
         new Task(() => OnCountDownDelegate("3!")).Start();
@@ -94,6 +97,10 @@ public class PolePositionManager : NetworkBehaviour
         Debug.Log("1!");
         new Task(() => OnCountDownDelegate("1!")).Start();
         Thread.Sleep(1000);
+        for (int i = 0; i < m_Players.Count; i++)
+        {
+            m_Players[i].StartTime = time;
+        }
         countDown.Signal();
         Debug.Log("GO!");
         new Task(() => OnCountDownDelegate("GO!")).Start();
@@ -156,17 +163,7 @@ public class PolePositionManager : NetworkBehaviour
             this.m_CircuitController.ComputeClosestPointArcLength(carPos, out segIdx, out carProj, out carDist);
 
         this.m_DebuggingSpheres[ID].transform.position = carProj;
-        /*
-        if (this.m_Players[ID].CurrentLap == 0)
-        {
-            minArcL -= m_CircuitController.CircuitLength;
-        }
-        else
-        {
-            //minArcL += m_CircuitController.CircuitLength * (m_Players[ID].CurrentLap - 1);
-            minArcL *= m_Players[ID].CurrentLap;
-        }
-        */
+
         float distance = minArcL - m_Players[ID].TotalDistance;
         /**/
         // Vuelta hacia atrás
@@ -181,7 +178,7 @@ public class PolePositionManager : NetworkBehaviour
             // !!!!! HA DE CAMBIARSE LA VUELTA MAX
             if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
             {
-                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap + "/ 3");
+                new Task(() => OnUpdateLapDelegate(m_Players[ID].CurrentLap.ToString())).Start();
             }
             m_Players[ID].TotalDistance = minArcL;
         }
@@ -189,10 +186,26 @@ public class PolePositionManager : NetworkBehaviour
         else if (distance < -300)
         {
             m_Players[ID].CurrentLap++;
+            
+            //Acabar partida para cada jugador
+            if (m_Players[ID].CurrentLap == 4)
+            {
+                m_Players[ID].FinishTime = Time.time - m_Players[ID].StartTime;
+
+                if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
+                {
+                    m_Players[ID].GetComponent<PlayerController>().enabled = false;
+                    uiManager.ActivateRankingHUD();
+                    //esperar al resto de players para mostrar ranqueen
+                    Debug.Log(m_Players[ID].FinishTime);
+                }
+                
+            }
+
             // !!!!! HA DE CAMBIARSE LA VUELTA MAX
             if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
             {
-                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap + "/ 3");
+                new Task(() => OnUpdateLapDelegate(m_Players[ID].CurrentLap.ToString())).Start();
             }
             m_Players[ID].TotalDistance = minArcL;
         }
@@ -200,6 +213,15 @@ public class PolePositionManager : NetworkBehaviour
         {
             m_Players[ID].TotalDistance += distance;
         }
+
+        if(distance < 0 && uiManager.textCountDown.text == "" && distance > -300)
+        {
+            if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
+            {
+                new Task(() => OnWrongDirectionDelegate("Wrong direction! T^T")).Start();
+            }
+        }
+
         /**/
         Debug.Log(m_Players[ID].CurrentLap);
         return minArcL;
