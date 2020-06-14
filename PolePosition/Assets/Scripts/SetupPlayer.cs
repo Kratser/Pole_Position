@@ -25,26 +25,23 @@ public class SetupPlayer : NetworkBehaviour
     private PlayerInfo m_PlayerInfo;
     private PolePositionManager m_PolePositionManager;
 
+    // !! Estaría guay con materiales
+    // Almacenamos los distintos prefabs que tienen los colores de los diferentes bodies
     public GameObject[] raceCarColors = new GameObject[4];
-
-    [Command]
-    public void CmdNewPlayerReady()
-    {
-        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-        m_PolePositionManager.numPlayersReady++;
-    }
 
     #region NAME
 
     /// <summary>
-    /// Actualizar el nombre sobre el coche con el nombre introducido por este
+    /// Para que un jugador esté listo, tiene que haber introducido un nombre correcto
+    /// y haber pulsado el botón de que está listo. Cuando el jugador modifica su nombre,
+    /// se envía al servidor esta nueva información, y cuando está listo para empezar
+    /// también le enviamos al servidor esta información para que se lo notifique a los otro clientes
     /// </summary>
-    public void ChangeName()
+    public void PlayerReady()
     {
         if (isLocalPlayer)
         {
             m_PlayerInfo.Name = m_UIManager.PlayerUserName;
-
             CmdNameToServer(m_PlayerInfo.Name);
 
             if (m_PlayerInfo.Name != null)
@@ -55,7 +52,8 @@ public class SetupPlayer : NetworkBehaviour
     }
 
     /// <summary>
-    /// 
+    /// Cuando un jugador modifica su nombre se envía esta información al servidor 
+    /// se modifica la variable compartida en el servidor y se comunica el cambio al resto de clientes
     /// </summary>
     /// <param name="name"></param>
     [Command]
@@ -63,6 +61,17 @@ public class SetupPlayer : NetworkBehaviour
     {
         GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
         m_Name = name;
+    }
+
+    /// <summary>
+    /// Cuando un jugador está preparado se aumenta en el servidor la varíable que cuenta 
+    /// el número de jugadores preparados y se comunica el cambio al resto de clientes.
+    /// </summary>
+    [Command]
+    public void CmdNewPlayerReady()
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_PolePositionManager.numPlayersReady++;
     }
 
     /// <summary>
@@ -74,7 +83,6 @@ public class SetupPlayer : NetworkBehaviour
     /// <param name="newName"></param>
     public void SetName(string oldName, string newName)
     {
-        // Hacer que el nombre aparezca sobre el jugador
         m_PlayerController.PlayerName.text = newName;
         m_PlayerInfo.Name = newName;
     }
@@ -84,7 +92,7 @@ public class SetupPlayer : NetworkBehaviour
     #region COLOR
 
     /// <summary>
-    /// Mediante un botón de la interfaz, vamos cambiando el color del coche
+    /// Mediante changeColorButton, vamos cambiando el color del coche cada vez que se pulsa
     /// </summary>
     public void ChangeColor()
     {
@@ -103,7 +111,8 @@ public class SetupPlayer : NetworkBehaviour
     }
 
     /// <summary>
-    /// 
+    /// Cuando un jugador modifica su color se envía esta información al servidor 
+    /// se modifica la variable compartida en el servidor y se comunica el cambio al resto de clientes
     /// </summary>
     /// <param name="color"></param>
     [Command]
@@ -153,12 +162,11 @@ public class SetupPlayer : NetworkBehaviour
         // m_PlayerInfo.Name = "Player" + m_ID;
         m_PlayerInfo.CurrentLap = 0;
 
-        m_UIManager.readyButton.onClick.AddListener(() => ChangeName());
+        m_UIManager.readyButton.onClick.AddListener(() => PlayerReady());
         m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
 
-        //Añadir jugador a la partida y a la barrera de inicio de partida
-        m_PolePositionManager.AddPlayer(m_PlayerInfo);
-         
+        // Añadir jugador a la partida
+        m_PolePositionManager.AddPlayer(m_PlayerInfo);     
     }
 
     /// <summary>
@@ -196,11 +204,15 @@ public class SetupPlayer : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Se espera a que estén todos los jugadores listos y que haya acabado la 
+    /// cuenta atrás para activar el controlador del juego.
+    /// </summary>
     public void WaitPlayersReady()
     {
         // Barrera para esperar a que todos los jugadores estén listos.
         m_PolePositionManager.PlayersNotReadyBarrier.WaitOne();
-        //Cuando todos estan listos: Cuenta atrás para empezar  3 ....   2 .... 1 ..... lets goo!!
+        //Cuando todos estan listos: Cuenta atrás para empezar  3... 2....1... lets go!
         m_PolePositionManager.countDown.Wait();
 
         //m_PlayerController.enabled = true;
@@ -210,7 +222,7 @@ public class SetupPlayer : NetworkBehaviour
 
     #endregion
 
-    // Actualización del UI de la velocidad CAMBIAR!!!
+    // Actualización del UI de la velocidad ¿POR QUÉ SE MULTIPLICA X5?
     void OnSpeedChangeEventHandler(float speed)
     {
         m_UIManager.UpdateSpeed((int)speed * 5); // 5 for visualization purpose (km/h)

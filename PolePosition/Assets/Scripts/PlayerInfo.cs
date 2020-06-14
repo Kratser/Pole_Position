@@ -21,6 +21,7 @@ public class PlayerInfo : MonoBehaviour
     public float FinishTime { get; set; }
 
     public bool IsReady { get; set; }
+
     public override string ToString()
     {
         return Name;

@@ -12,6 +12,7 @@ public class UIManager : MonoBehaviour
 
     private NetworkManager m_NetworkManager;
 
+    #region Unity Canvas Variables
     [Header("Main Menu")] [SerializeField] private GameObject mainMenu;
     [SerializeField] private Button buttonHost;
     [SerializeField] private Button buttonClient;
@@ -26,14 +27,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] public int PlayerColor { get; set; }
     [SerializeField] private Text errorInsertNameText;
 
-    [Header("In-Game HUD")] [SerializeField]
-    private GameObject inGameHUD;
-
+    [Header("In-Game HUD")] [SerializeField] private GameObject inGameHUD;
     [SerializeField] private Text textSpeed;
     [SerializeField] private Text textLaps;
     [SerializeField] private Text textPosition;
     [SerializeField] public Text textCountDown;
-
 
     [Header("Ranking")] [SerializeField] private GameObject rankingHUD;
     [SerializeField] private Button exitButton;
@@ -41,6 +39,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text textTimes;
     [SerializeField] private Text textFinish;
     [SerializeField] private Text textWaitingPlayers;
+    #endregion
 
     private void Awake()
     {
@@ -49,11 +48,13 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        buttonHost.onClick.AddListener(() => StartSelectMenu(0));
-        buttonClient.onClick.AddListener(() => StartSelectMenu(1));
-        buttonServer.onClick.AddListener(() => StartSelectMenu(2));
         ActivateMainMenu();
+        buttonHost.onClick.AddListener(() => StartHost());
+        buttonClient.onClick.AddListener(() => StartClient());
+        buttonServer.onClick.AddListener(() => StartServer());
     }
+
+    #region Activate Menus
 
     private void ActivateMainMenu()
     {
@@ -72,36 +73,33 @@ public class UIManager : MonoBehaviour
         mainMenu.SetActive(false);
         selectMenu.SetActive(true);
     }
+
     public void ActivateRankingHUD()
     {
         rankingHUD.SetActive(true);
         inGameHUD.SetActive(false);
     }
+
+    #endregion
+
     /// <summary>
-    /// Comienza la partida (cuando estén todos listos)
+    /// Se inicia el menu de selección y le asignamos al botón ready 
+    /// del menú de selección la comprobación de que se haya introducido 
+    /// el campo username bien para poder empezar con la carrera
     /// </summary>
-    /// <param name="c">Tipo de conexión (Host, Cliente o Servidor)</param>
-    public void StartConnection(int c)
+    private void StartSelectMenu()
     {
-        switch (c)
-        {
-            case 0:
-                StartHost();
-                break;
-            case 1:
-                StartClient();
-                break;
-            case 2:
-                StartServer();
-                break;
-            default:
-                break;
-        }
+        readyButton.onClick.AddListener(() => CheckData());
+        ActivateSelectHUD();
     }
 
-    public void CheckData(int c)
+    /// <summary>
+    /// Para el campo dónde el jugador introduce su nombre, queremos comprobar
+    /// que ha introducido un nombre, que no se repite con otro jugador y que
+    /// no se pasa de la longitud máxima establecida.
+    /// </summary>
+    public void CheckData()
     {
-        // Comprobar si los datos introducidos son correctos
         if (inputFieldName.text.Length != 0)
         {
             // Comprobar el nombre con los demás usuarios
@@ -110,39 +108,33 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-
             // Mensaje "Introduce Nombre de Usuario"
             errorInsertNameText.enabled = true;
         }
     }
 
-    /// <summary>
-    /// Se inicia el menu de selección, y cuando se han elegido el coche y el nombre de usuario,
-    /// se inicia la conexión
-    /// </summary>
-    /// <param name="connection">Parámetro que guarda la opción seleccionada del Menú Principal</param>
-    private void StartSelectMenu(int connection)
-    {
-        readyButton.onClick.AddListener(() => CheckData(connection));
-        ActivateSelectHUD();
-        StartConnection(connection);
-    }
+    #region Start Network
 
     private void StartHost()
     {
         m_NetworkManager.StartHost();
+        StartSelectMenu();
     }
 
     private void StartClient()
     {
         m_NetworkManager.StartClient();
         m_NetworkManager.networkAddress = inputFieldIP.text;
+        StartSelectMenu();
     }
 
     private void StartServer()
     {
         m_NetworkManager.StartServer();
+        StartSelectMenu();
     }
+
+    #endregion
 
     #region UI Delegates
 

@@ -13,7 +13,6 @@ public class PolePositionManager : NetworkBehaviour
     public int numPlayers;
     public NetworkManager networkManager;
     public UIManager uiManager;
-
   
     public delegate void OnUIChangeEvent(string newOrder);
     public OnUIChangeEvent OnOrderChangeDelegate;
@@ -21,17 +20,18 @@ public class PolePositionManager : NetworkBehaviour
     public OnUIChangeEvent OnUpdateLapDelegate;
     public OnUIChangeEvent OnWrongDirectionDelegate;
 
-
     private readonly List<PlayerInfo> m_Players = new List<PlayerInfo>(4);
     private CircuitController m_CircuitController;
     private GameObject[] m_DebuggingSpheres;
+
     //Barrera de seleccion de color de coche y nombre de usuario
     public Semaphore PlayersNotReadyBarrier = new Semaphore(0, 4);
-
     [SyncVar(hook = nameof(CheckPlayersReady))] public int numPlayersReady;
-    public int numPlayersFinished;
 
     public CountdownEvent countDown = new CountdownEvent(3);
+
+    // Comprobar 
+    public int numPlayersFinished;
 
     private void Awake()
     {
