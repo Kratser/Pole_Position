@@ -5,7 +5,7 @@ using UnityEngine;
 public class CircuitController : MonoBehaviour
 {
     public LineRenderer m_CircuitPath;
-    private Vector3[] m_PathPos;
+    public Vector3[] m_PathPos;
     private float[] m_CumArcLength;
     private float m_TotalLength;
 

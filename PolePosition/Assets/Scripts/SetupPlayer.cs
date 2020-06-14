@@ -201,6 +201,8 @@ public class SetupPlayer : NetworkBehaviour
 
             m_PlayerController.enabled = true;
             m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
+            m_PlayerController.OnCrashDelegate += m_UIManager.ShowCrashError;
+
         }
     }
 
@@ -217,6 +219,7 @@ public class SetupPlayer : NetworkBehaviour
 
         //m_PlayerController.enabled = true;
         //m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
+        //m_PlayerController.OnCrashDelegate += m_UIManager.ShowCrashError;
         m_PlayerInfo.IsReady = true;
     }
 

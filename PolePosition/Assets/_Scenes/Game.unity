@@ -1185,7 +1185,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 200}
+  m_SizeDelta: {x: 500, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &299809597
 MonoBehaviour:
@@ -8041,6 +8041,7 @@ MonoBehaviour:
   numPlayers: 0
   networkManager: {fileID: 0}
   uiManager: {fileID: 1823041897}
+  m_DebuggingSpheres: []
   numPlayersReady: 0
   numPlayersFinished: 0
 --- !u!4 &1839589614
@@ -12181,6 +12182,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1da5bf1f90e356b4e8984ff62b95825f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_CircuitPath: {fileID: 0}
 --- !u!1 &9126478172555348649
 GameObject:
   m_ObjectHideFlags: 0

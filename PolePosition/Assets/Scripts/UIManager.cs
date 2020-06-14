@@ -196,5 +196,10 @@ public class UIManager : MonoBehaviour
         textTimes.text = timesText;
     }
 
+    public void ShowCrashError(string msg)
+    {
+        textCountDown.text = msg;
+    }
+
     #endregion
 }

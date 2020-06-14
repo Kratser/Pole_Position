@@ -23,9 +23,9 @@ public class PolePositionManager : NetworkBehaviour
     public OnUIChangeEvent OnUpdateLapDelegate;
     public OnUIChangeEvent OnWrongDirectionDelegate;
 
-    private readonly List<PlayerInfo> m_Players = new List<PlayerInfo>(4);
-    private CircuitController m_CircuitController;
-    private GameObject[] m_DebuggingSpheres;
+    public readonly List<PlayerInfo> m_Players = new List<PlayerInfo>(4);
+    public CircuitController m_CircuitController;
+    public GameObject[] m_DebuggingSpheres;
 
     //Barrera de seleccion de color de coche y nombre de usuario
     public Semaphore PlayersNotReadyBarrier = new Semaphore(0, 4);
@@ -86,6 +86,23 @@ public class PolePositionManager : NetworkBehaviour
 
     #region Players are ready --> CountDown
 
+    /// <summary>
+    /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
+    /// The Hook is always called after the property value is set. You don't need to set it yourself.
+    /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
+    /// </summary>
+    /// <param name="oldPlayersReady"></param>
+    /// <param name="newPlayersReady"></param>
+    public void CheckPlayersReady(int oldPlayersReady, int newPlayersReady)
+    {
+        Debug.Log(numPlayersReady);
+        if ((newPlayersReady == numPlayers) /*&& (numPlayers >= 2)*/)
+        {
+            PlayersNotReadyBarrier.Release(newPlayersReady);
+            RpcStartCountDown();
+        }
+    }
+
     [ClientRpc]
     public void RpcStartCountDown()
     {
@@ -115,23 +132,6 @@ public class PolePositionManager : NetworkBehaviour
         new Task(() => OnCountDownDelegate("GO!")).Start();
         Thread.Sleep(1000);
         new Task(() => OnCountDownDelegate("")).Start();
-    }
-
-    /// <summary>
-    /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
-    /// The Hook is always called after the property value is set. You don't need to set it yourself.
-    /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
-    /// </summary>
-    /// <param name="oldPlayersReady"></param>
-    /// <param name="newPlayersReady"></param>
-    public void CheckPlayersReady(int oldPlayersReady, int newPlayersReady)
-    {
-        Debug.Log(numPlayersReady);
-        if ((newPlayersReady == numPlayers) /*&& (numPlayers >= 2)*/)
-        {
-            PlayersNotReadyBarrier.Release(newPlayersReady);
-            RpcStartCountDown();
-        }
     }
 
     #endregion
@@ -194,8 +194,11 @@ public class PolePositionManager : NetworkBehaviour
         // the circuit.
         Vector3 carPos = this.m_Players[ID].transform.position;
 
+        // Segmento de la línea del circuito en la que se encuentra el jugador "ID"
         int segIdx;
+        // Distancia que hay desde el jugador "ID" hasta su proyección sobre el segmento más cercano
         float carDist;
+        // Proyección de la posición del jugador "ID" sobre el segmento más cercano
         Vector3 carProj;
 
         float minArcL = this.m_CircuitController.ComputeClosestPointArcLength(carPos, out segIdx, out carProj, out carDist);
@@ -206,23 +209,7 @@ public class PolePositionManager : NetworkBehaviour
 
         CheckLaps(ID, distance, minArcL);
 
-        Debug.Log("ACTUALLLLL" + segIdx);
-        Debug.Log("ANTERIORRR" + m_Players[ID].CurrentSegment);
-        Debug.Log("TOTALLL" + m_CircuitController.m_CircuitPath.positionCount);
-
-        if ((m_Players[ID].CurrentSegment - segIdx == 1 
-            || m_Players[ID].CurrentSegment - segIdx == -(m_CircuitController.m_CircuitPath.positionCount - 2)) 
-            && m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
-        {
-            new Task(() => OnWrongDirectionDelegate("Wrong direction! T^T")).Start();
-        }
-        if (m_Players[ID].CurrentSegment - segIdx == 1 || m_Players[ID].CurrentSegment - segIdx == -1
-            || m_Players[ID].CurrentSegment - segIdx == (m_CircuitController.m_CircuitPath.positionCount - 2) 
-            || m_Players[ID].CurrentSegment - segIdx == -(m_CircuitController.m_CircuitPath.positionCount - 2))
-        {
-            
-            m_Players[ID].CurrentSegment = segIdx;
-        }
+        CheckDirection(ID, segIdx);
         
         return minArcL;
     }
@@ -252,7 +239,6 @@ public class PolePositionManager : NetworkBehaviour
             m_Players[ID].CurrentLap++;
 
             // !!!!! HA DE CAMBIARSE LA VUELTA MAX
-            Debug.Log("Vuelta: " + m_Players[ID].CurrentLap);
 
             if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
             {
@@ -262,8 +248,8 @@ public class PolePositionManager : NetworkBehaviour
             m_Players[ID].TotalDistance = minArcL;
             distance = minArcL;
 
-            //Acabar partida para cada jugador //HAY QUE CAMBIARLO (VUELTAS), SOLO DEBUG
-            if (m_Players[ID].CurrentLap == 2)
+            //Acabar partida para cada jugador
+            if (m_Players[ID].CurrentLap == 4)
             {
                 m_Players[ID].FinishTime = Time.time - m_Players[ID].StartTime;
                 numPlayersFinished++;
@@ -283,4 +269,23 @@ public class PolePositionManager : NetworkBehaviour
         }
         /**/
     }
+
+    public void CheckDirection(int ID, int segIdx)
+    {
+        if ((m_Players[ID].CurrentSegment - segIdx == 1
+            || m_Players[ID].CurrentSegment - segIdx == -(m_CircuitController.m_CircuitPath.positionCount - 2))
+            && m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
+        {
+            new Task(() => OnWrongDirectionDelegate("Wrong direction! T^T")).Start();
+        }
+
+        if (m_Players[ID].CurrentSegment - segIdx == 1 || m_Players[ID].CurrentSegment - segIdx == -1
+            || m_Players[ID].CurrentSegment - segIdx == (m_CircuitController.m_CircuitPath.positionCount - 2)
+            || m_Players[ID].CurrentSegment - segIdx == -(m_CircuitController.m_CircuitPath.positionCount - 2))
+        {
+
+            m_Players[ID].CurrentSegment = segIdx;
+        }
+    }
+
 }

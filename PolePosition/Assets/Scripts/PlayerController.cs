@@ -34,8 +34,8 @@ public class PlayerController : NetworkBehaviour
     private PlayerInfo m_PlayerInfo;
 
     private Rigidbody m_Rigidbody;
+    private Transform m_Transform;
     private float m_SteerHelper = 0.8f;
-
 
     private float m_CurrentSpeed = 0;
 
@@ -61,12 +61,17 @@ public class PlayerController : NetworkBehaviour
 
     public event OnSpeedChangeDelegate OnSpeedChangeEvent;
 
+    public delegate void OnCrashEvent(string msg);
+
+    public OnCrashEvent OnCrashDelegate;
+
     #endregion Variables
 
     #region Unity Callbacks
 
     public void Awake()
     {
+        m_Transform = GetComponent<Transform>();
         m_Rigidbody = GetComponent<Rigidbody>();
         m_PlayerInfo = GetComponent<PlayerInfo>();
     }
@@ -93,6 +98,12 @@ public class PlayerController : NetworkBehaviour
         InputAcceleration = Mathf.Clamp(Input.GetAxis("Vertical"), -1, 1);
         InputSteering = Mathf.Clamp(Input.GetAxis("Horizontal"), -1, 1);
         InputBrake = Mathf.Clamp(Input.GetAxis("Jump"), 0, 1);
+
+        if (Input.GetKey(KeyCode.Space))
+        {
+            // Se resetea al jugador en la carrera
+            ResetPlayer();
+        }
 
         float steering = maxSteeringAngle * InputSteering;
 
@@ -145,6 +156,7 @@ public class PlayerController : NetworkBehaviour
         SpeedLimiter();
         AddDownForce();
         TractionControl();
+        CheckCrash();
 
         // Nombre del jugador que aparece sobre su coche. Cambiamos posiciones con respecto a la cámara.
         Vector3 namePos = Camera.main.WorldToScreenPoint(this.transform.position);
@@ -238,6 +250,30 @@ public class PlayerController : NetworkBehaviour
         }
 
         CurrentRotation = transform.eulerAngles.y;
+    }
+
+    public void CheckCrash()
+    {
+        Debug.Log("Rotación en Z: " + m_Rigidbody.rotation.eulerAngles.z);
+        if ((m_Rigidbody.rotation.eulerAngles.x > 45 && m_Rigidbody.rotation.eulerAngles.x < 315)
+         || (m_Rigidbody.rotation.eulerAngles.z > 45 && m_Rigidbody.rotation.eulerAngles.z < 315))
+        {
+            // Se muestra el mensaje para dar la vuelta al jugador y volver a la carrera
+            OnCrashDelegate("Press Space bar to recover");
+        }
+    }
+
+    public void ResetPlayer()
+    {
+        PolePositionManager m_PolePositionManager = FindObjectOfType<PolePositionManager>();
+        
+        Vector3 newPos = m_PolePositionManager.m_DebuggingSpheres[m_PolePositionManager.m_Players.IndexOf(m_PlayerInfo)].GetComponent<Transform>().position;
+        m_Transform.position = newPos + new Vector3(0,1,0);
+
+        Vector3 newRotation = m_PolePositionManager.m_CircuitController.m_PathPos[m_PlayerInfo.CurrentSegment+1] - m_PolePositionManager.m_CircuitController.m_PathPos[m_PlayerInfo.CurrentSegment];
+        m_Transform.rotation = Quaternion.LookRotation(newRotation, new Vector3(0,1,0));
+        OnCrashDelegate("");
+
     }
 
     #endregion
