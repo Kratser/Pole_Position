@@ -169,7 +169,7 @@ public class UIManager : MonoBehaviour
     {
         textCountDown.fontSize = 45;
         textCountDown.text = msg;
-        Thread.Sleep(500);
+        Thread.Sleep(1000);
         textCountDown.text = "";
         textCountDown.fontSize = 100;
     }

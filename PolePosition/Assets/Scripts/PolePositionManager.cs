@@ -162,7 +162,7 @@ public class PolePositionManager : NetworkBehaviour
         }
         OnOrderChangeDelegate(myRaceOrder);
 
-        Debug.Log("El orden de carrera es: " + myRaceOrder);
+        //Debug.Log("El orden de carrera es: " + myRaceOrder);
 
         /* Cuando han terminado todos los jugadores menos el último activamos el HUD
          * con el Ranking y mostramos las posiciones en las que han quedado y cuánto han tardado*/
@@ -199,14 +199,31 @@ public class PolePositionManager : NetworkBehaviour
         Vector3 carProj;
 
         float minArcL = this.m_CircuitController.ComputeClosestPointArcLength(carPos, out segIdx, out carProj, out carDist);
-
+        
         this.m_DebuggingSpheres[ID].transform.position = carProj;
 
         float distance = minArcL - m_Players[ID].TotalDistance;
 
         CheckLaps(ID, distance, minArcL);
 
-        Debug.Log(m_Players[ID].CurrentLap);
+        Debug.Log("ACTUALLLLL" + segIdx);
+        Debug.Log("ANTERIORRR" + m_Players[ID].CurrentSegment);
+        Debug.Log("TOTALLL" + m_CircuitController.m_CircuitPath.positionCount);
+
+        if ((m_Players[ID].CurrentSegment - segIdx == 1 
+            || m_Players[ID].CurrentSegment - segIdx == -(m_CircuitController.m_CircuitPath.positionCount - 2)) 
+            && m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
+        {
+            new Task(() => OnWrongDirectionDelegate("Wrong direction! T^T")).Start();
+        }
+        if (m_Players[ID].CurrentSegment - segIdx == 1 || m_Players[ID].CurrentSegment - segIdx == -1
+            || m_Players[ID].CurrentSegment - segIdx == (m_CircuitController.m_CircuitPath.positionCount - 2) 
+            || m_Players[ID].CurrentSegment - segIdx == -(m_CircuitController.m_CircuitPath.positionCount - 2))
+        {
+            
+            m_Players[ID].CurrentSegment = segIdx;
+        }
+        
         return minArcL;
     }
 
@@ -263,18 +280,6 @@ public class PolePositionManager : NetworkBehaviour
         else
         {
             m_Players[ID].TotalDistance += distance;
-        }
-
-        if (distance < -0.1)
-            Debug.Log("Comprobar distancia: " + ID + ": " + distance);
-
-        // Si estamos yendo en dirección contraria, notificarlo
-        if (distance < -0.1 && distance > -3 && uiManager.textCountDown.text == "")
-        {
-            if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
-            {
-                new Task(() => OnWrongDirectionDelegate("Wrong direction! T^T")).Start();
-            }
         }
         /**/
     }
