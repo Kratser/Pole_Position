@@ -155,12 +155,14 @@ public class UIManager : MonoBehaviour
 
     public void UpdateLap (string laps)
     {
-        textLaps.text = "LAP: " + laps + "/ 3";
-        textCountDown.fontSize = 45;
-        textCountDown.text = "LAP: " + laps + "/3";
-        Thread.Sleep(1500);
-        textCountDown.text = "";
-        textCountDown.fontSize = 100;
+        //Debug.LogWarning("LAPS BEFORE" + laps);
+        textLaps.text = "LAP: " + laps + "/3";
+        //textCountDown.fontSize = 45;
+        //textCountDown.text = "LAP: " + laps + "/3";
+        ////Debug.LogWarning("LAPS AFTER" + laps);
+        //Thread.Sleep(1500);
+        //textCountDown.text = "";
+        //textCountDown.fontSize = 100;
     }
 
     public void WrongDirection(string msg)
