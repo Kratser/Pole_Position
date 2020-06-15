@@ -138,7 +138,8 @@ public class PolePositionManager : NetworkBehaviour
 
     public  int ComparePlayers(PlayerInfo x, PlayerInfo y)
     {
-        if (/*this.m_ArcLengths[x.ID]*/ (m_CircuitController.CircuitLength * (x.CurrentLap - 1)) + x.TotalDistance < (m_CircuitController.CircuitLength * (y.CurrentLap - 1)) + y.TotalDistance)
+        if ((m_CircuitController.CircuitLength * (x.CurrentLap - 1)) + x.TotalDistance 
+            < (m_CircuitController.CircuitLength * (y.CurrentLap - 1)) + y.TotalDistance)
             return 1;
         else return -1;
     }

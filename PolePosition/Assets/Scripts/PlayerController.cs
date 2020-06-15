@@ -58,11 +58,9 @@ public class PlayerController : NetworkBehaviour
     }
 
     public delegate void OnSpeedChangeDelegate(float newVal);
-
     public event OnSpeedChangeDelegate OnSpeedChangeEvent;
 
     public delegate void OnCrashEvent(string msg);
-
     public OnCrashEvent OnCrashDelegate;
 
     #endregion Variables
@@ -99,9 +97,9 @@ public class PlayerController : NetworkBehaviour
         InputSteering = Mathf.Clamp(Input.GetAxis("Horizontal"), -1, 1);
         InputBrake = Mathf.Clamp(Input.GetAxis("Jump"), 0, 1);
 
+        // Para resetear la posición del jugador si ha volcado, se debe pulsar la barra espaciadora
         if (Input.GetKey(KeyCode.Space))
         {
-            // Se resetea al jugador en la carrera
             ResetPlayer();
         }
 
@@ -254,6 +252,7 @@ public class PlayerController : NetworkBehaviour
 
     public void CheckCrash()
     {
+        // Si está sufriendo una rotación muy elevada en x o z significa que el coche ha volcado
         Debug.Log("Rotación en Z: " + m_Rigidbody.rotation.eulerAngles.z);
         if ((m_Rigidbody.rotation.eulerAngles.x > 45 && m_Rigidbody.rotation.eulerAngles.x < 315)
          || (m_Rigidbody.rotation.eulerAngles.z > 45 && m_Rigidbody.rotation.eulerAngles.z < 315))
@@ -267,13 +266,14 @@ public class PlayerController : NetworkBehaviour
     {
         PolePositionManager m_PolePositionManager = FindObjectOfType<PolePositionManager>();
         
+        // Accedemos a las esferas de debug para que a la hora de resetear la posición, el coche se centre en la carretera
         Vector3 newPos = m_PolePositionManager.m_DebuggingSpheres[m_PolePositionManager.m_Players.IndexOf(m_PlayerInfo)].GetComponent<Transform>().position;
         m_Transform.position = newPos + new Vector3(0,1,0);
 
+        // Reseteamos la posición del jugador haciendo que mire en la dirección en la que se desarrolla la carrera
         Vector3 newRotation = m_PolePositionManager.m_CircuitController.m_PathPos[m_PlayerInfo.CurrentSegment+1] - m_PolePositionManager.m_CircuitController.m_PathPos[m_PlayerInfo.CurrentSegment];
         m_Transform.rotation = Quaternion.LookRotation(newRotation, new Vector3(0,1,0));
         OnCrashDelegate("");
-
     }
 
     #endregion
