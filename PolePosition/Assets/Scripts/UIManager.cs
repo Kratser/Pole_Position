@@ -56,10 +56,12 @@ public class UIManager : MonoBehaviour
 
     #region Activate Menus
 
-    private void ActivateMainMenu()
+    public void ActivateMainMenu()
     {
         mainMenu.SetActive(true);
         inGameHUD.SetActive(false);
+        rankingHUD.SetActive(false);
+        selectMenu.SetActive(false);
     }
 
     private void ActivateInGameHUD()
@@ -155,14 +157,7 @@ public class UIManager : MonoBehaviour
 
     public void UpdateLap (string laps)
     {
-        //Debug.LogWarning("LAPS BEFORE" + laps);
-        textLaps.text = "LAP: " + laps + "/3";
-        //textCountDown.fontSize = 45;
-        //textCountDown.text = "LAP: " + laps + "/3";
-        ////Debug.LogWarning("LAPS AFTER" + laps);
-        //Thread.Sleep(1500);
-        //textCountDown.text = "";
-        //textCountDown.fontSize = 100;
+        textLaps.text = laps;
     }
 
     public void WrongDirection(string msg)

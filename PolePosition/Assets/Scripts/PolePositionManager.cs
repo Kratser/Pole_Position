@@ -14,6 +14,8 @@ public class PolePositionManager : NetworkBehaviour
     #region Variables
 
     public int numPlayers;
+    public int minPlayers = 2;
+    public int maxLaps = 4;
     public NetworkManager networkManager;
     public UIManager uiManager;
   
@@ -23,7 +25,7 @@ public class PolePositionManager : NetworkBehaviour
     public OnUIChangeEvent OnUpdateLapDelegate;
     public OnUIChangeEvent OnWrongDirectionDelegate;
 
-    public readonly List<PlayerInfo> m_Players = new List<PlayerInfo>(4);
+    public List<PlayerInfo> m_Players = new List<PlayerInfo>(4);
     public CircuitController m_CircuitController;
     public GameObject[] m_DebuggingSpheres;
 
@@ -71,7 +73,104 @@ public class PolePositionManager : NetworkBehaviour
     {
         m_Players.Add(player);
         numPlayers++;
-        
+    }
+
+    public void RemovePlayer(PlayerInfo player)
+    {
+        bool playerRemoved = m_Players.Remove(player);
+
+        if (playerRemoved)
+        {
+            Debug.LogWarning("Jugador eliminado");
+            CheckPlayersRemoved(player);
+        }
+    }
+
+    public void CheckPlayersRemoved(PlayerInfo player)
+    {
+        numPlayers--;
+        if (player.GetComponent<NetworkBehaviour>().isServer)
+        {
+            // Reiniciar todo y volver al inicio
+            if (player.GetComponent<NetworkBehaviour>().isServerOnly)
+            {
+                Debug.LogWarning("A la mierda el SERVIDOR");
+                NetworkManager.singleton.StopServer();
+            }
+            else
+            {
+                Debug.LogWarning("A la mierda el HOST");
+                NetworkManager.singleton.StopHost();
+            }
+            ResetGame();
+        }
+        else
+        {
+            if (numPlayers == 1)
+            {
+                Debug.LogWarning("Me quedo solo, vuelvo al menú");
+                // Reiniciar todo y volver al inicio
+                if (m_Players[0].GetComponent<NetworkBehaviour>().isServer)
+                {
+                    if (m_Players[0].GetComponent<NetworkBehaviour>().isServerOnly)
+                    {
+                        Debug.LogWarning("Cierro mi conexión de SERVIDOR");
+                        NetworkManager.singleton.StopServer();
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Cierro mi conexión de HOST");
+                        NetworkManager.singleton.StopHost();
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("Cierro mi conexión de CLIENTE");
+                    NetworkManager.singleton.StopClient();
+                }
+                ResetGame();
+                return;
+            }
+            else if (numPlayers == 0)
+            {
+                if (player.GetComponent<NetworkBehaviour>().isServerOnly)
+                {
+                    Debug.LogWarning("A la mierda el SERVIDOR HOSTIA");
+                    NetworkManager.singleton.StopServer();
+                }
+                Debug.LogWarning("Me quedo solo, vuelvo al menú");
+                // Reiniciar todo y volver al inicio
+                ResetGame();
+                return;
+            }
+            // Eliminar jugador
+            if (player.IsReadyToStart)
+            {
+                player.IsReadyToStart = false;
+                numPlayersReady--;
+            }
+            if (player.CurrentLap == maxLaps)
+            {
+                player.CurrentLap = 0;
+                numPlayersFinished--;
+            }
+            /*
+            if (player.GetComponent<NetworkBehaviour>().isClientOnly)
+            {
+                NetworkManager.singleton.StopClient();
+            }
+            */
+        }
+    }
+
+    public void ResetGame()
+    {
+        m_Players.Clear();
+        numPlayers = 0;
+        numPlayersReady = 0;
+        numPlayersFinished = 0;
+        countDown.Reset();
+        uiManager.ActivateMainMenu();
     }
 
     public string FloatToTime (float s){
@@ -95,10 +194,9 @@ public class PolePositionManager : NetworkBehaviour
     /// <param name="newPlayersReady"></param>
     public void CheckPlayersReady(int oldPlayersReady, int newPlayersReady)
     {
-        Debug.Log(numPlayersReady);
-        if ((newPlayersReady == numPlayers) /*&& (numPlayers >= 2)*/)
+        if ((newPlayersReady == numPlayers) && (numPlayers >= minPlayers))
         {
-            PlayersNotReadyBarrier.Release(newPlayersReady);
+            //PlayersNotReadyBarrier.Release(newPlayersReady);
             RpcStartCountDown();
         }
     }
@@ -165,8 +263,10 @@ public class PolePositionManager : NetworkBehaviour
 
         //Debug.Log("El orden de carrera es: " + myRaceOrder);
 
-        /* Cuando han terminado todos los jugadores menos el último activamos el HUD
-         * con el Ranking y mostramos las posiciones en las que han quedado y cuánto han tardado*/
+        /* 
+         * Cuando han terminado todos los jugadores menos el último activamos el HUD
+         * con el Ranking y mostramos las posiciones en las que han quedado y cuánto han tardado
+         */
         if (numPlayersFinished == numPlayers - 1 && numPlayers > 1)
         {
             numPlayersFinished++;
@@ -230,7 +330,7 @@ public class PolePositionManager : NetworkBehaviour
             // !!!!! HA DE CAMBIARSE LA VUELTA MAX
             if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
             {
-                OnUpdateLapDelegate(m_Players[ID].CurrentLap.ToString());
+                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps-1));
             }
             m_Players[ID].TotalDistance = minArcL;
         }
@@ -243,14 +343,14 @@ public class PolePositionManager : NetworkBehaviour
 
             if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
             {
-                OnUpdateLapDelegate(m_Players[ID].CurrentLap.ToString());
+                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps-1));
             }
 
             m_Players[ID].TotalDistance = minArcL;
             distance = minArcL;
 
             //Acabar partida para cada jugador
-            if (m_Players[ID].CurrentLap == 4)
+            if (m_Players[ID].CurrentLap == maxLaps)
             {
                 m_Players[ID].FinishTime = Time.time - m_Players[ID].StartTime;
                 numPlayersFinished++;

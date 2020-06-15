@@ -59,5 +59,10 @@ public class CameraController : MonoBehaviour
                 mainCamera.transform.LookAt(m_Focus.transform.position);
             }
         }
+        else
+        {
+            this.transform.position = new Vector3(0.0f, 2.82f, -10.0f);
+            this.transform.rotation = new Quaternion(0, 0, 0, 0);
+        }
     }
 }

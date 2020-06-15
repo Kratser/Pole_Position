@@ -253,7 +253,6 @@ public class PlayerController : NetworkBehaviour
     public void CheckCrash()
     {
         // Si está sufriendo una rotación muy elevada en x o z significa que el coche ha volcado
-        Debug.Log("Rotación en Z: " + m_Rigidbody.rotation.eulerAngles.z);
         if ((m_Rigidbody.rotation.eulerAngles.x > 45 && m_Rigidbody.rotation.eulerAngles.x < 315)
          || (m_Rigidbody.rotation.eulerAngles.z > 45 && m_Rigidbody.rotation.eulerAngles.z < 315))
         {

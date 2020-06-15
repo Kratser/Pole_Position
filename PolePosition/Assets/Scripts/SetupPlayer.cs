@@ -71,6 +71,7 @@ public class SetupPlayer : NetworkBehaviour
     public void CmdNewPlayerReady()
     {
         GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_PlayerInfo.IsReadyToStart = true;
         m_PolePositionManager.numPlayersReady++;
     }
 
@@ -166,7 +167,7 @@ public class SetupPlayer : NetworkBehaviour
         m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
 
         // Añadir jugador a la partida
-        m_PolePositionManager.AddPlayer(m_PlayerInfo);     
+        m_PolePositionManager.AddPlayer(m_PlayerInfo);
     }
 
     /// <summary>
@@ -175,6 +176,12 @@ public class SetupPlayer : NetworkBehaviour
     /// </summary>
     public override void OnStartLocalPlayer()
     {
+    }
+
+    private void OnDestroy()
+    {
+        m_PolePositionManager.RemovePlayer(m_PlayerInfo);
+        //m_UIManager.ActivateMainMenu();
     }
 
     #endregion
@@ -213,7 +220,7 @@ public class SetupPlayer : NetworkBehaviour
     public void WaitPlayersReady()
     {
         // Barrera para esperar a que todos los jugadores estén listos.
-        m_PolePositionManager.PlayersNotReadyBarrier.WaitOne();
+        //m_PolePositionManager.PlayersNotReadyBarrier.WaitOne();
         //Cuando todos estan listos: Cuenta atrás para empezar  3... 2....1... lets go!
         m_PolePositionManager.countDown.Wait();
 
