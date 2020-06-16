@@ -133,7 +133,10 @@ public class UIManager : MonoBehaviour
     private void StartServer()
     {
         m_NetworkManager.StartServer();
-        StartSelectMenu();
+        mainMenu.SetActive(false);
+        Camera.main.transform.position = new Vector3(-106, 13, 87);
+        Camera.main.transform.rotation = Quaternion.Euler(28, 54, 0);
+        //StartSelectMenu();
     }
 
     #endregion

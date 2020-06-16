@@ -160,8 +160,19 @@ public class SetupPlayer : NetworkBehaviour
 
         if (isServerOnly)
         {
-            m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
-            m_PolePositionManager.AddPlayer(m_PlayerInfo);
+            //m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
+            for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
+            {
+                if (!m_PolePositionManager.playersConnected[i])
+                {
+                    m_PlayerInfo.ID = i;
+                    Debug.LogWarning("Id del cliente nuevo: " + m_PlayerInfo.ID);
+                    m_PlayerInfo.CurrentLap = 0;
+                    m_PolePositionManager.AddPlayer(m_PlayerInfo);
+                    return;
+                }
+            }
+            // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
         }
     }
 
@@ -172,15 +183,23 @@ public class SetupPlayer : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
-        // m_PlayerInfo.Name = "Player" + m_ID;
-        m_PlayerInfo.CurrentLap = 0;
+        //m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
+        for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
+        {
+            if (!m_PolePositionManager.playersConnected[i])
+            {
+                m_PlayerInfo.ID = i;
+                m_PlayerInfo.CurrentLap = 0;
 
-        m_UIManager.readyButton.onClick.AddListener(() => PlayerReady());
-        m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
+                m_UIManager.readyButton.onClick.AddListener(() => PlayerReady());
+                m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
 
-        // Añadir jugador a la partida
-        m_PolePositionManager.AddPlayer(m_PlayerInfo);
+                // Añadir jugador a la partida
+                m_PolePositionManager.AddPlayer(m_PlayerInfo);
+                return;
+            }
+        }
+        // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
     /// <summary>
