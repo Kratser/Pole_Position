@@ -74,11 +74,11 @@ public class PolePositionManager : NetworkBehaviour
         m_Players.Add(player);
         numPlayers++;
     }
-
+    #region Players Exit Management
     public void RemovePlayer(PlayerInfo player)
     {
         bool playerRemoved = m_Players.Remove(player);
-
+        
         if (playerRemoved)
         {
             Debug.LogWarning("Jugador eliminado");
@@ -89,62 +89,35 @@ public class PolePositionManager : NetworkBehaviour
     public void CheckPlayersRemoved(PlayerInfo player)
     {
         numPlayers--;
-        if (player.GetComponent<NetworkBehaviour>().isServer)
+
+        if (numPlayers <= 1)
         {
-            // Reiniciar todo y volver al inicio
-            if (player.GetComponent<NetworkBehaviour>().isServerOnly)
+            if (isServer)
             {
-                Debug.LogWarning("A la mierda el SERVIDOR");
-                NetworkManager.singleton.StopServer();
+                if (isServerOnly)
+                {
+                    NetworkManager.singleton.StopServer();
+                    Debug.LogWarning("Tas quedao solo server, te echo");
+                }
+                else
+                {
+                    NetworkManager.singleton.StopHost();
+                    Debug.LogWarning("Tas quedao solo host, te echo");
+                }
             }
             else
             {
-                Debug.LogWarning("A la mierda el HOST");
-                NetworkManager.singleton.StopHost();
+                NetworkManager.singleton.StopClient();
+                Debug.LogWarning("Tas quedao sin server, a tomar por culo todos");
             }
+
             ResetGame();
         }
         else
         {
-            if (numPlayers == 1)
-            {
-                Debug.LogWarning("Me quedo solo, vuelvo al menú");
-                // Reiniciar todo y volver al inicio
-                if (m_Players[0].GetComponent<NetworkBehaviour>().isServer)
-                {
-                    if (m_Players[0].GetComponent<NetworkBehaviour>().isServerOnly)
-                    {
-                        Debug.LogWarning("Cierro mi conexión de SERVIDOR");
-                        NetworkManager.singleton.StopServer();
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Cierro mi conexión de HOST");
-                        NetworkManager.singleton.StopHost();
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("Cierro mi conexión de CLIENTE");
-                    NetworkManager.singleton.StopClient();
-                }
-                ResetGame();
-                return;
-            }
-            else if (numPlayers == 0)
-            {
-                if (player.GetComponent<NetworkBehaviour>().isServerOnly)
-                {
-                    Debug.LogWarning("A la mierda el SERVIDOR HOSTIA");
-                    NetworkManager.singleton.StopServer();
-                }
-                Debug.LogWarning("Me quedo solo, vuelvo al menú");
-                // Reiniciar todo y volver al inicio
-                ResetGame();
-                return;
-            }
-            // Eliminar jugador
-            if (player.IsReadyToStart)
+            //Comprobar jugadores listossssssssssssssss
+            //Eliminar jugador
+                if (player.IsReadyToStart)
             {
                 player.IsReadyToStart = false;
                 numPlayersReady--;
@@ -154,12 +127,6 @@ public class PolePositionManager : NetworkBehaviour
                 player.CurrentLap = 0;
                 numPlayersFinished--;
             }
-            /*
-            if (player.GetComponent<NetworkBehaviour>().isClientOnly)
-            {
-                NetworkManager.singleton.StopClient();
-            }
-            */
         }
     }
 
@@ -172,6 +139,8 @@ public class PolePositionManager : NetworkBehaviour
         countDown.Reset();
         uiManager.ActivateMainMenu();
     }
+
+    #endregion
 
     public string FloatToTime (float s){
         string time;
@@ -197,9 +166,13 @@ public class PolePositionManager : NetworkBehaviour
         if ((newPlayersReady == numPlayers) && (numPlayers >= minPlayers))
         {
             //PlayersNotReadyBarrier.Release(newPlayersReady);
-            RpcStartCountDown();
+            SetupPlayer m_setupPlayer = FindObjectOfType<SetupPlayer>();
+            m_setupPlayer.CmdCallRpcCountdown();
         }
+
     }
+
+    
 
     [ClientRpc]
     public void RpcStartCountDown()
@@ -250,6 +223,7 @@ public class PolePositionManager : NetworkBehaviour
         for (int i = 0; i < m_Players.Count; ++i)
         {
             arcLengths[i] = ComputeCarArcLength(m_Players[i].ID);
+            //arcLengths[i] = ComputeCarArcLength(i);
         }
 
         m_Players.Sort((P1, P2)=>ComparePlayers(P1, P2));

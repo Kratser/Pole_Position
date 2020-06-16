@@ -139,6 +139,13 @@ public class SetupPlayer : NetworkBehaviour
 
     #endregion
 
+    [Command]
+    public void CmdCallRpcCountdown()
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_PolePositionManager.RpcStartCountDown();
+    }
+
     #region Start & Stop Callbacks
 
     /// <summary>
@@ -150,6 +157,12 @@ public class SetupPlayer : NetworkBehaviour
     {
         base.OnStartServer();
         m_ID = connectionToClient.connectionId;
+
+        if (isServerOnly)
+        {
+            m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
+            m_PolePositionManager.AddPlayer(m_PlayerInfo);
+        }
     }
 
     /// <summary>
@@ -159,7 +172,7 @@ public class SetupPlayer : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        m_PlayerInfo.ID = m_ID;
+        m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
         // m_PlayerInfo.Name = "Player" + m_ID;
         m_PlayerInfo.CurrentLap = 0;
 
