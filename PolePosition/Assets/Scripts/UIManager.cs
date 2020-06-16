@@ -33,12 +33,17 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text textPosition;
     [SerializeField] public Text textCountDown;
 
-    [Header("Ranking")] [SerializeField] private GameObject rankingHUD;
+    [Header("RankingHUD")] [SerializeField] private GameObject rankingHUD;
     [SerializeField] private Button exitButton;
     [SerializeField] private Text textRanking;
     [SerializeField] private Text textTimes;
     [SerializeField] private Text textFinish;
     [SerializeField] private Text textWaitingPlayers;
+
+    [Header("ServerHUD")] [SerializeField] private GameObject serverHUD;
+    [SerializeField] private Text textOrder;
+    [SerializeField] private Button closeButton;
+
     #endregion
 
     private void Awake()
@@ -62,6 +67,7 @@ public class UIManager : MonoBehaviour
         inGameHUD.SetActive(false);
         rankingHUD.SetActive(false);
         selectMenu.SetActive(false);
+        serverHUD.SetActive(false);
     }
 
     private void ActivateInGameHUD()
@@ -81,6 +87,11 @@ public class UIManager : MonoBehaviour
         rankingHUD.SetActive(true);
         inGameHUD.SetActive(false);
     }
+    public void ActivateServerHUD()
+    {
+        serverHUD.SetActive(true);
+        mainMenu.SetActive(false);
+    }
 
     #endregion
 
@@ -93,6 +104,25 @@ public class UIManager : MonoBehaviour
     {
         readyButton.onClick.AddListener(() => CheckData());
         ActivateSelectHUD();
+    }
+
+    /// <summary>
+    /// Se inicia el menú del servidor y asignamos al botón "close"
+    /// la función para cerrar el servidor
+    /// </summary>
+    private void StartServerMenu()
+    {
+        closeButton.onClick.AddListener(() => CloseServer());
+        ActivateServerHUD();
+        Camera.main.transform.position = new Vector3(-106, 13, 87);
+        Camera.main.transform.rotation = Quaternion.Euler(28, 54, 0);
+    }
+
+    private void CloseServer()
+    {
+        NetworkManager.singleton.StopServer();
+        ActivateMainMenu();
+        Camera.main.GetComponent<CameraController>().ResetCamera();
     }
 
     /// <summary>
@@ -125,18 +155,22 @@ public class UIManager : MonoBehaviour
 
     private void StartClient()
     {
+        if (inputFieldIP.text == "")
+        {
+            m_NetworkManager.networkAddress = "localhost";
+        }
+        else
+        {
+            m_NetworkManager.networkAddress = inputFieldIP.text;
+        }
         m_NetworkManager.StartClient();
-        m_NetworkManager.networkAddress = inputFieldIP.text;
         StartSelectMenu();
     }
 
     private void StartServer()
     {
         m_NetworkManager.StartServer();
-        mainMenu.SetActive(false);
-        Camera.main.transform.position = new Vector3(-106, 13, 87);
-        Camera.main.transform.rotation = Quaternion.Euler(28, 54, 0);
-        //StartSelectMenu();
+        StartServerMenu();
     }
 
     #endregion
@@ -150,7 +184,24 @@ public class UIManager : MonoBehaviour
 
     public void ChangeOrder(string newOrder)
     {
+        string[] order = newOrder.Split(' ');
+        newOrder = "";
+        for (int i = 0; i < order.Length-1; i++)
+        {
+            newOrder += (i + 1) + ". " + order[i]+ "\n";
+        }
         textPosition.text = newOrder;
+        
+    }
+    public void ChangeOrderServer(string newOrder)
+    {
+        string[] order = newOrder.Split(' ');
+        newOrder = "";
+        for (int i = 0; i < order.Length-1; i++)
+        {
+            newOrder += (i + 1) + "# " + order[i] + "\n\n";
+        }
+        textOrder.text = newOrder;
     }
 
     public void CountDown(string time)

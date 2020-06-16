@@ -61,6 +61,8 @@ public class SetupPlayer : NetworkBehaviour
     {
         GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
         m_Name = name;
+        m_PlayerController.PlayerName.text = name;
+        m_PlayerInfo.Name = name;
     }
 
     /// <summary>

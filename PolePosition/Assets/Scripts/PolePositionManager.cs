@@ -51,6 +51,7 @@ public class PolePositionManager : NetworkBehaviour
 
         //Delegados UI
         OnOrderChangeDelegate += uiManager.ChangeOrder;
+        OnOrderChangeDelegate += uiManager.ChangeOrderServer;
         OnCountDownDelegate += uiManager.CountDown;
         OnUpdateLapDelegate += uiManager.UpdateLap;
         OnWrongDirectionDelegate += uiManager.WrongDirection;
@@ -183,7 +184,6 @@ public class PolePositionManager : NetworkBehaviour
         {
             if ((newPlayersReady == numPlayers) && (numPlayers >= minPlayers))
             {
-                //PlayersNotReadyBarrier.Release(newPlayersReady);
                 GameStarted = true;
                 SetupPlayer m_setupPlayer = FindObjectOfType<SetupPlayer>();
                 m_setupPlayer.CmdCallRpcCountdown();
@@ -247,11 +247,9 @@ public class PolePositionManager : NetworkBehaviour
         string myRaceOrder = "";
         for (int i = 0; i < m_Players.Count; i++)
         {
-            myRaceOrder += (i+1) + ". " + m_Players[i].Name + "\n";
+            myRaceOrder += m_Players[i].Name + " ";
         }
         OnOrderChangeDelegate(myRaceOrder);
-
-        //Debug.Log("El orden de carrera es: " + myRaceOrder);
 
         /* 
          * Cuando han terminado todos los jugadores menos el último activamos el HUD
