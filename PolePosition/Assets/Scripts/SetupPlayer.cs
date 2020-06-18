@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 public class SetupPlayer : NetworkBehaviour
 {
+    #region Variables
     [SyncVar] private int m_ID;
 
     // The hook attribute can be used to specify a function to be called when the SyncVar changes value on the client.
@@ -23,11 +24,14 @@ public class SetupPlayer : NetworkBehaviour
     private NetworkManager m_NetworkManager;
     private PlayerController m_PlayerController;
     private PlayerInfo m_PlayerInfo;
+    private NameController m_NameController;
     private PolePositionManager m_PolePositionManager;
 
     // !! Estaría guay con materiales
     // Almacenamos los distintos prefabs que tienen los colores de los diferentes bodies
     public GameObject[] raceCarColors = new GameObject[4];
+
+    #endregion Variables
 
     #region NAME
 
@@ -51,31 +55,6 @@ public class SetupPlayer : NetworkBehaviour
         }
     }
 
-    /// <summary>
-    /// Cuando un jugador modifica su nombre se envía esta información al servidor 
-    /// se modifica la variable compartida en el servidor y se comunica el cambio al resto de clientes
-    /// </summary>
-    /// <param name="name"></param>
-    [Command]
-    private void CmdNameToServer(string name)
-    {
-        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-        m_Name = name;
-        m_PlayerController.PlayerName.text = name;
-        m_PlayerInfo.Name = name;
-    }
-
-    /// <summary>
-    /// Cuando un jugador está preparado se aumenta en el servidor la varíable que cuenta 
-    /// el número de jugadores preparados y se comunica el cambio al resto de clientes.
-    /// </summary>
-    [Command]
-    public void CmdNewPlayerReady()
-    {
-        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-        m_PlayerInfo.IsReadyToStart = true;
-        m_PolePositionManager.numPlayersReady++;
-    }
 
     /// <summary>
     /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
@@ -86,7 +65,7 @@ public class SetupPlayer : NetworkBehaviour
     /// <param name="newName"></param>
     public void SetName(string oldName, string newName)
     {
-        m_PlayerController.PlayerName.text = newName;
+        m_NameController.PlayerName.text = newName;
         m_PlayerInfo.Name = newName;
     }
 
@@ -114,19 +93,6 @@ public class SetupPlayer : NetworkBehaviour
     }
 
     /// <summary>
-    /// Cuando un jugador modifica su color se envía esta información al servidor 
-    /// se modifica la variable compartida en el servidor y se comunica el cambio al resto de clientes
-    /// </summary>
-    /// <param name="color"></param>
-    [Command]
-    private void CmdColorToServer(int color)
-    {
-        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-        
-        m_Color = color;
-    }
-
-    /// <summary>
     /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
     /// The Hook is always called after the property value is set. You don't need to set it yourself.
     /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
@@ -140,13 +106,6 @@ public class SetupPlayer : NetworkBehaviour
     }
 
     #endregion
-
-    [Command]
-    public void CmdCallRpcCountdown()
-    {
-        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-        m_PolePositionManager.RpcStartCountDown();
-    }
 
     #region Start & Stop Callbacks
 
@@ -229,6 +188,7 @@ public class SetupPlayer : NetworkBehaviour
         m_NetworkManager = FindObjectOfType<NetworkManager>();
         m_PolePositionManager = FindObjectOfType<PolePositionManager>();
         m_UIManager = FindObjectOfType<UIManager>();
+        m_NameController = GetComponent<NameController>();
     }
 
     // Start is called before the first frame update
@@ -237,36 +197,24 @@ public class SetupPlayer : NetworkBehaviour
         if (isLocalPlayer)
         {
             ConfigureCamera();
-            m_PlayerInfo.IsReady = false;
-            new Task(() => WaitPlayersReady()).Start();
-
-            m_PlayerController.enabled = true;
-            m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
-            m_PlayerController.OnCrashDelegate += m_UIManager.ShowCrashError;
-
         }
-    }
-
-    /// <summary>
-    /// Se espera a que estén todos los jugadores listos y que haya acabado la 
-    /// cuenta atrás para activar el controlador del juego.
-    /// </summary>
-    public void WaitPlayersReady()
-    {
-        // Barrera para esperar a que todos los jugadores estén listos.
-        //m_PolePositionManager.PlayersNotReadyBarrier.WaitOne();
-        //Cuando todos estan listos: Cuenta atrás para empezar  3... 2....1... lets go!
-        m_PolePositionManager.countDown.Wait();
-
-        //m_PlayerController.enabled = true;
-        //m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
-        //m_PlayerController.OnCrashDelegate += m_UIManager.ShowCrashError;
-        m_PlayerInfo.IsReady = true;
     }
 
     #endregion
 
-    // Actualización del UI de la velocidad ¿POR QUÉ SE MULTIPLICA X5?
+    #region Methods
+
+    public void StartPlayer()
+    {
+        if (isLocalPlayer)
+        {
+            m_PlayerController.enabled = true;
+            m_PlayerController.OnSpeedChangeEvent += OnSpeedChangeEventHandler;
+            m_PlayerController.OnCrashDelegate += m_UIManager.ShowCrashError;
+        }
+    }
+
+    // Actualización del UI de la velocidad
     void OnSpeedChangeEventHandler(float speed)
     {
         m_UIManager.UpdateSpeed((int)speed * 5); // 5 for visualization purpose (km/h)
@@ -276,4 +224,56 @@ public class SetupPlayer : NetworkBehaviour
     {
         if (Camera.main != null) Camera.main.gameObject.GetComponent<CameraController>().m_Focus = this.gameObject;
     }
+
+    #endregion Methods
+
+    #region Commands
+
+    //////////////////
+    ///////NAME///////
+    //////////////////
+    /// <summary>
+    /// Cuando un jugador modifica su nombre se envía esta información al servidor 
+    /// se modifica la variable compartida en el servidor y se comunica el cambio al resto de clientes
+    /// </summary>
+    /// <param name="name"></param>
+    [Command]
+    private void CmdNameToServer(string name)
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_Name = name;
+        m_NameController.PlayerName.text = name;
+        m_PlayerInfo.Name = name;
+    }
+
+    //////////////////
+    ///PLAYER READY///
+    //////////////////
+    /// <summary>
+    /// Cuando un jugador está preparado se aumenta en el servidor la varíable que cuenta
+    /// el número de jugadores preparados y se comunica el cambio al resto de clientes.
+    /// </summary>
+    [Command]
+    public void CmdNewPlayerReady()
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_PolePositionManager.NewPlayerReady(this.gameObject);
+    }
+
+    //////////////////
+    ///////COLOR//////
+    //////////////////
+    /// <summary>
+    /// Cuando un jugador modifica su color se envía esta información al servidor 
+    /// se modifica la variable compartida en el servidor y se comunica el cambio al resto de clientes
+    /// </summary>
+    /// <param name="color"></param>
+    [Command]
+    private void CmdColorToServer(int color)
+    {
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_Color = color;
+    }
+
+    #endregion Commands
 }

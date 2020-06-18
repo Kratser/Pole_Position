@@ -1295,9 +1295,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '
-
-'
+  m_Text: 
 --- !u!222 &299809598
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8470,6 +8468,7 @@ MonoBehaviour:
   m_DebuggingSpheres: []
   numPlayersReady: 0
   numPlayersFinished: 0
+  timersStartTime: []
 --- !u!4 &1839589614
 Transform:
   m_ObjectHideFlags: 0

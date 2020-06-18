@@ -30,11 +30,7 @@ public class PolePositionManager : NetworkBehaviour
     public CircuitController m_CircuitController;
     public GameObject[] m_DebuggingSpheres;
 
-    //Barrera de seleccion de color de coche y nombre de usuario
-    public Semaphore PlayersNotReadyBarrier = new Semaphore(0, 4);
     [SyncVar(hook = nameof(CheckPlayersReady))] public int numPlayersReady;
-
-    public CountdownEvent countDown = new CountdownEvent(3);
     
     // "true" si ya ha comezado la vuelta atrás, "false" en caso contrario
     public bool GameStarted { get; set; }
@@ -42,7 +38,13 @@ public class PolePositionManager : NetworkBehaviour
     // Espera a que todos los jugadores (menos el últimmo) hayan terminado la carrera para poner el ranking
     public int numPlayersFinished;
 
-    #endregion
+    public delegate void CheckTimerEvent(float s);
+    public CheckTimerEvent CheckTimerDelegate;
+    public List<float> timersStartTime = new List<float>();
+
+    #endregion Variables
+
+    #region Start And Update
 
     private void Awake()
     {
@@ -76,16 +78,34 @@ public class PolePositionManager : NetworkBehaviour
         if (m_Players.Count == 0)
             return;
 
+        if (CheckTimerDelegate != null)
+        {
+            CheckTimerDelegate(Time.time);
+        }
+
         UpdateRaceProgress();
     }
 
+    #endregion Start And Update
+
+    #region Add and Remove Players
+
+    /// <summary>
+    /// Método que añade un jugador a la lista m_Players y aumenta el contador de jugadores
+    /// </summary>
+    /// <param name="player"></param>
     public void AddPlayer(PlayerInfo player)
     {
         m_Players.Add(player);
         playersConnected[player.ID] = true;
         numPlayers++;
     }
-    #region Players Exit Management
+    
+    /// <summary>
+    /// Método que elimina a un jugador de la lista m_Players
+    /// y comprueba si hay que acabar la partida
+    /// </summary>
+    /// <param name="player"></param>
     public void RemovePlayer(PlayerInfo player)
     {
         bool playerRemoved = m_Players.Remove(player);
@@ -97,6 +117,15 @@ public class PolePositionManager : NetworkBehaviour
         }
     }
 
+    #endregion Add and Remove Players
+
+    #region Players Exit Management
+
+    /// <summary>
+    /// Método que comprueba si hay que terminar la partida en caso 
+    /// de falta de jugadores
+    /// </summary>
+    /// <param name="player">Jugador que ha sido eliminado</param>
     public void CheckPlayersRemoved(PlayerInfo player)
     {
         numPlayers--;
@@ -107,7 +136,7 @@ public class PolePositionManager : NetworkBehaviour
         }
         else
         {
-            //Comprobar jugadores listossssssssssssssss
+            //Comprobar jugadores listos
             //Eliminar jugador
                 if (player.IsReadyToStart)
             {
@@ -122,6 +151,10 @@ public class PolePositionManager : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Método que reinicia el juego, cerrando las conexiones
+    /// y reiniciando las variables
+    /// </summary>
     public void ResetGame()
     {
         if (isServer)
@@ -147,7 +180,6 @@ public class PolePositionManager : NetworkBehaviour
         numPlayers = 0;
         numPlayersReady = 0;
         numPlayersFinished = 0;
-        countDown.Reset();
         GameStarted = false;
         for (int i = 0; i < playersConnected.Length; i++)
         {
@@ -157,17 +189,9 @@ public class PolePositionManager : NetworkBehaviour
         uiManager.ActivateMainMenu();
     }
 
-    #endregion
+    #endregion Players Exit Management
 
-    public string FloatToTime (float s){
-        string time;
-        int mins, secs, ms;
-        mins = (int)(s % 3600) / 60;
-        secs = (int)(s % 60);
-        ms = (int)((s % (int)s) * 1000);
-        time = mins + ":" + secs + ":" + ms;
-        return time;
-    }
+    #region Methods
 
     #region Players are ready --> CountDown
 
@@ -185,19 +209,21 @@ public class PolePositionManager : NetworkBehaviour
             if ((newPlayersReady == numPlayers) && (numPlayers >= minPlayers))
             {
                 GameStarted = true;
-                SetupPlayer m_setupPlayer = FindObjectOfType<SetupPlayer>();
-                m_setupPlayer.CmdCallRpcCountdown();
+                if (isServer)
+                {
+                    RpcStartCountDown();
+                }
             }
         }
     }
-
-    
 
     [ClientRpc]
     public void RpcStartCountDown()
     {
         float startTime = Time.time;
-        new Task(() => CountDown(startTime)).Start();
+        timersStartTime.Add(startTime);
+        CheckTimerDelegate += TimerCountDown;
+        //new Task(() => CountDown(startTime)).Start();
     }
 
     public void CountDown(float time)
@@ -205,35 +231,74 @@ public class PolePositionManager : NetworkBehaviour
         Debug.Log("3!");
         new Task(() => OnCountDownDelegate("3!")).Start();
         Thread.Sleep(1000);
-        countDown.Signal();
         Debug.Log("2!");
         new Task(() => OnCountDownDelegate("2!")).Start();
         Thread.Sleep(1000);
-        countDown.Signal();
         Debug.Log("1!");
         new Task(() => OnCountDownDelegate("1!")).Start();
         Thread.Sleep(1000);
         for (int i = 0; i < m_Players.Count; i++)
         {
             m_Players[i].StartTime = time;
+            m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
         }
-        countDown.Signal();
         Debug.Log("GO!");
         new Task(() => OnCountDownDelegate("GO!")).Start();
         Thread.Sleep(1000);
         new Task(() => OnCountDownDelegate("")).Start();
     }
 
-    #endregion
-
-    public  int ComparePlayers(PlayerInfo x, PlayerInfo y)
+    public void TimerCountDown(float s)
     {
-        if ((m_CircuitController.CircuitLength * (x.CurrentLap - 1)) + x.TotalDistance 
+        float elapsedTime = s - timersStartTime[0];
+        if (elapsedTime >= 0 && elapsedTime < 1)
+        {
+            OnCountDownDelegate("3!");
+        }
+        else if (elapsedTime >= 1 && elapsedTime < 2)
+        {
+            OnCountDownDelegate("2!");
+        }
+        else if(elapsedTime >= 2 && elapsedTime < 3)
+        {
+            OnCountDownDelegate("1!");
+        }
+        else if (elapsedTime >= 3 && elapsedTime < 4)
+        {
+            OnCountDownDelegate("GO!");
+            for (int i = 0; i < m_Players.Count; i++)
+            {
+                m_Players[i].StartTime = timersStartTime[0];
+                m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
+            }
+        }
+        else
+        {
+            OnCountDownDelegate("");
+            CheckTimerDelegate -= TimerCountDown;
+            timersStartTime.RemoveAt(0);
+        }
+    }
+
+    #endregion Players are ready --> CountDown
+
+    /// <summary>
+    /// Método que comprueba qué jugador va delante, y que ordena la lista m_Players
+    /// </summary>
+    /// <param name="x">Uno de los jugadores que se va a comparar</param>
+    /// <param name="y">Uno de los jugadores que se va a comparar</param>
+    /// <returns>Devuelve 1 si el jugador "y" va delante del jugador "x"</returns>
+    public int ComparePlayers(PlayerInfo x, PlayerInfo y)
+    {
+        if ((m_CircuitController.CircuitLength * (x.CurrentLap - 1)) + x.TotalDistance
             < (m_CircuitController.CircuitLength * (y.CurrentLap - 1)) + y.TotalDistance)
             return 1;
         else return -1;
     }
 
+    /// <summary>
+    /// Método que actualiza las posiciones de la carrera y la interfaz
+    /// </summary>
     public void UpdateRaceProgress()
     {
 
@@ -242,7 +307,7 @@ public class PolePositionManager : NetworkBehaviour
             ComputeCarArcLength(i);
         }
 
-        m_Players.Sort((P1, P2)=>ComparePlayers(P1, P2));
+        m_Players.Sort((P1, P2) => ComparePlayers(P1, P2));
 
         string myRaceOrder = "";
         for (int i = 0; i < m_Players.Count; i++)
@@ -264,18 +329,21 @@ public class PolePositionManager : NetworkBehaviour
             string[] times = new string[numPlayers];
             for (int i = 0; i < m_Players.Count; i++)
             {
-                //m_Players[i].ID
                 positions[i] = m_Players[i].Name;
                 times[i] = FloatToTime(m_Players[i].FinishTime);
                 // El jugador que no consigue llegar a la meta no tiene tiempo
                 times[times.Length - 1] = "--:--:--";
             }
-           
+
             uiManager.ActivateRankingHUD();
             uiManager.ChangeRankingHUD(positions, times);
         }
     }
 
+    /// <summary>
+    /// Método que calcula a qué distancia se encuentra el jugador de la meta
+    /// </summary>
+    /// <param name="ID">Id del jugador dentro de la lista m_Players</param>
     void ComputeCarArcLength(int ID)
     {
         // Compute the projection of the car position to the closest circuit 
@@ -291,7 +359,7 @@ public class PolePositionManager : NetworkBehaviour
         Vector3 carProj;
 
         float minArcL = this.m_CircuitController.ComputeClosestPointArcLength(carPos, out segIdx, out carProj, out carDist);
-        
+
         this.m_DebuggingSpheres[ID].transform.position = carProj;
 
         float distance = minArcL - m_Players[ID].TotalDistance;
@@ -301,9 +369,14 @@ public class PolePositionManager : NetworkBehaviour
         CheckDirection(ID, segIdx);
     }
 
+    /// <summary>
+    /// Método que comrpueba si el jugador pasa por la meta
+    /// </summary>
+    /// <param name="ID">Id del jugador dentro de la lista m_Players</param>
+    /// <param name="distance">Distancia recorrida desde el update anterior</param>
+    /// <param name="minArcL">Distancia de la meta al jugador</param>
     public void CheckLaps(int ID, float distance, float minArcL)
     {
-        /**/
         // Vuelta hacia atrás
         if (distance > 300)
         {
@@ -313,10 +386,9 @@ public class PolePositionManager : NetworkBehaviour
             {
                 m_Players[ID].CurrentLap = 0;
             }
-            // !!!!! HA DE CAMBIARSE LA VUELTA MAX
             if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
             {
-                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps-1));
+                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps - 1));
             }
             m_Players[ID].TotalDistance = minArcL;
         }
@@ -325,11 +397,9 @@ public class PolePositionManager : NetworkBehaviour
         {
             m_Players[ID].CurrentLap++;
 
-            // !!!!! HA DE CAMBIARSE LA VUELTA MAX
-
             if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
             {
-                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps-1));
+                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps - 1));
             }
 
             m_Players[ID].TotalDistance = minArcL;
@@ -354,9 +424,13 @@ public class PolePositionManager : NetworkBehaviour
         {
             m_Players[ID].TotalDistance += distance;
         }
-        /**/
     }
 
+    /// <summary>
+    /// Método que comprueba si el jugador va en dirección correcta
+    /// </summary>
+    /// <param name="ID">Id del jugador dentro de la lista m_Players</param>
+    /// <param name="segIdx">Id del segmento en el que se encuentra el jugador</param>
     public void CheckDirection(int ID, int segIdx)
     {
         if ((m_Players[ID].CurrentSegment - segIdx == 1
@@ -370,9 +444,37 @@ public class PolePositionManager : NetworkBehaviour
             || m_Players[ID].CurrentSegment - segIdx == (m_CircuitController.m_CircuitPath.positionCount - 2)
             || m_Players[ID].CurrentSegment - segIdx == -(m_CircuitController.m_CircuitPath.positionCount - 2))
         {
-
             m_Players[ID].CurrentSegment = segIdx;
         }
     }
+
+    /// <summary>
+    /// Método que formatea un número en segundos a minutos:segundos:milisegundos
+    /// </summary>
+    /// <param name="s">Número recibido en segundos</param>
+    /// <returns>Cadena de caracteres con el tiempo formateado</returns>
+    public string FloatToTime(float s)
+    {
+        string time;
+        int mins, secs, ms;
+        mins = (int)(s % 3600) / 60;
+        secs = (int)(s % 60);
+        ms = (int)((s % (int)s) * 1000);
+        time = mins + ":" + secs + ":" + ms;
+        return time;
+    }
+
+    #endregion Methods
+
+    #region Commands
+
+    public void NewPlayerReady(GameObject player)
+    {
+        PlayerInfo playerInfo = player.GetComponent<PlayerInfo>();
+        playerInfo.IsReadyToStart = true;
+        numPlayersReady++;
+    }
+
+    #endregion Commands
 
 }

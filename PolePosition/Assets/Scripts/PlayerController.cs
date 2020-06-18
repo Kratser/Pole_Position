@@ -28,9 +28,6 @@ public class PlayerController : NetworkBehaviour
     private float InputSteering { get; set; }
     private float InputBrake { get; set; }
 
-    // Texto que aparece sobre el coche del juegador
-    public Text PlayerName;
-
     private PlayerInfo m_PlayerInfo;
 
     private Rigidbody m_Rigidbody;
@@ -57,6 +54,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    // Delegados
     public delegate void OnSpeedChangeDelegate(float newVal);
     public event OnSpeedChangeDelegate OnSpeedChangeEvent;
 
@@ -76,10 +74,6 @@ public class PlayerController : NetworkBehaviour
 
     public void Update()
     {
-        if (!m_PlayerInfo.IsReady)
-        {
-            return;
-        }
         //InputAcceleration = Input.GetAxis("Vertical");
         //InputSteering = Input.GetAxis("Horizontal");
         //InputBrake = Input.GetAxis("Jump");
@@ -88,11 +82,6 @@ public class PlayerController : NetworkBehaviour
 
     public void FixedUpdate()
     {
-        if (!m_PlayerInfo.IsReady)
-        {
-            return;
-        }
-
         InputAcceleration = Mathf.Clamp(Input.GetAxis("Vertical"), -1, 1);
         InputSteering = Mathf.Clamp(Input.GetAxis("Horizontal"), -1, 1);
         InputBrake = Mathf.Clamp(Input.GetAxis("Jump"), 0, 1);
@@ -156,12 +145,9 @@ public class PlayerController : NetworkBehaviour
         TractionControl();
         CheckCrash();
 
-        // Nombre del jugador que aparece sobre su coche. Cambiamos posiciones con respecto a la cámara.
-        Vector3 namePos = Camera.main.WorldToScreenPoint(this.transform.position);
-        PlayerName.transform.position = namePos + new Vector3(0, 55, 0);
     }
 
-    #endregion
+    #endregion Unity Callbacks
 
     #region Methods
 
@@ -190,7 +176,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-// this is used to add more grip in relation to speed
+    // this is used to add more grip in relation to speed
     private void AddDownForce()
     {
         foreach (var axleInfo in axleInfos)
@@ -207,8 +193,8 @@ public class PlayerController : NetworkBehaviour
             m_Rigidbody.velocity = topSpeed * m_Rigidbody.velocity.normalized;
     }
 
-// finds the corresponding visual wheel
-// correctly applies the transform
+    // finds the corresponding visual wheel
+    // correctly applies the transform
     public void ApplyLocalPositionToVisuals(WheelCollider col)
     {
         if (col.transform.childCount == 0)
@@ -239,7 +225,7 @@ public class PlayerController : NetworkBehaviour
             }
         }
 
-// this if is needed to avoid gimbal lock problems that will make the car suddenly shift direction
+        // this if is needed to avoid gimbal lock problems that will make the car suddenly shift direction
         if (Mathf.Abs(CurrentRotation - transform.eulerAngles.y) < 10f)
         {
             var turnAdjust = (transform.eulerAngles.y - CurrentRotation) * m_SteerHelper;
@@ -250,6 +236,12 @@ public class PlayerController : NetworkBehaviour
         CurrentRotation = transform.eulerAngles.y;
     }
 
+    #region Crash
+
+    /// <summary>
+    /// Método que comrpueba si el coche se ha girado, y muestra un mensaje
+    /// por pantalla para avisar al jugador
+    /// </summary>
     public void CheckCrash()
     {
         // Si está sufriendo una rotación muy elevada en x o z significa que el coche ha volcado
@@ -261,19 +253,25 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Método que reinicia al jugador en la misma posición que su esfera, para
+    /// que pueda volver a la carrera en caso de accidente
+    /// </summary>
     public void ResetPlayer()
     {
         PolePositionManager m_PolePositionManager = FindObjectOfType<PolePositionManager>();
-        
+
         // Accedemos a las esferas de debug para que a la hora de resetear la posición, el coche se centre en la carretera
         Vector3 newPos = m_PolePositionManager.m_DebuggingSpheres[m_PolePositionManager.m_Players.IndexOf(m_PlayerInfo)].GetComponent<Transform>().position;
-        m_Transform.position = newPos + new Vector3(0,1,0);
+        m_Transform.position = newPos + new Vector3(0, 1, 0);
 
         // Reseteamos la posición del jugador haciendo que mire en la dirección en la que se desarrolla la carrera
-        Vector3 newRotation = m_PolePositionManager.m_CircuitController.m_PathPos[m_PlayerInfo.CurrentSegment+1] - m_PolePositionManager.m_CircuitController.m_PathPos[m_PlayerInfo.CurrentSegment];
-        m_Transform.rotation = Quaternion.LookRotation(newRotation, new Vector3(0,1,0));
+        Vector3 newRotation = m_PolePositionManager.m_CircuitController.m_PathPos[m_PlayerInfo.CurrentSegment + 1] - m_PolePositionManager.m_CircuitController.m_PathPos[m_PlayerInfo.CurrentSegment];
+        m_Transform.rotation = Quaternion.LookRotation(newRotation, new Vector3(0, 1, 0));
         OnCrashDelegate("");
     }
+
+    #endregion Crash
 
     #endregion
 }
