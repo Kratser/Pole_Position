@@ -112,6 +112,8 @@ public class PolePositionManager : NetworkBehaviour
     public void AddPlayer(PlayerInfo player)
     {
         m_Players.Add(player);
+        // Inicializamos el segmento del jugador al segmento donde se hace el spawn del jugador
+        m_Players[m_Players.Count - 1].CurrentSegment = ComputeCarArcLength(m_Players.Count - 1);
         playersConnected[player.ID] = true;
         numPlayers++;
     }
@@ -191,18 +193,23 @@ public class PolePositionManager : NetworkBehaviour
             Debug.LogWarning("Tas quedao sin server, a tomar por culo todos");
         }
 
-        m_Players.Clear();
-        numPlayers = 0;
-        numPlayersReady = 0;
-        numPlayersFinished = 0;
-        gameStarted = false;
-        for (int i = 0; i < playersConnected.Length; i++)
-        {
-            playersConnected[i] = false;
+        try {
+            m_Players.Clear();
+            numPlayers = 0;
+            numPlayersReady = 0;
+            numPlayersFinished = 0;
+            gameStarted = false;
+            for (int i = 0; i < playersConnected.Length; i++)
+            {
+                playersConnected[i] = false;
+            }
+            Camera.main.gameObject.GetComponent<CameraController>().m_Focus = null;
+            Camera.main.gameObject.GetComponent<CameraController>().ResetCamera();
+            uiManager.ActivateMainMenu();
         }
-        Camera.main.gameObject.GetComponent<CameraController>().m_Focus = null;
-        Camera.main.gameObject.GetComponent<CameraController>().ResetCamera();
-        uiManager.ActivateMainMenu();
+        catch(NullReferenceException ex){
+            Debug.Log(ex);
+        }
     }
 
     #endregion Players Exit Management
@@ -352,7 +359,7 @@ public class PolePositionManager : NetworkBehaviour
     /// Método que calcula a qué distancia se encuentra el jugador de la meta
     /// </summary>
     /// <param name="ID">Id del jugador dentro de la lista m_Players</param>
-    void ComputeCarArcLength(int ID)
+    int ComputeCarArcLength(int ID)
     {
         // Compute the projection of the car position to the closest circuit 
         // path segment and accumulate the arc-length along of the car along
@@ -375,6 +382,8 @@ public class PolePositionManager : NetworkBehaviour
         CheckLaps(ID, distance, minArcL);
 
         CheckDirection(ID, segIdx);
+
+        return segIdx;
     }
 
     /// <summary>

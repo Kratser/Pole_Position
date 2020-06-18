@@ -56,6 +56,7 @@ public class SetupPlayer : NetworkBehaviour
         }
     }
 
+   
 
     /// <summary>
     /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
