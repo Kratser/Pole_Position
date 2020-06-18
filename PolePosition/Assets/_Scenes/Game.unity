@@ -8459,7 +8459,7 @@ MonoBehaviour:
   syncInterval: 0.1
   playersConnected: 00000000
   numPlayers: 0
-  minPlayers: 2
+  minPlayers: 1
   maxLaps: 4
   networkManager: {fileID: 0}
   uiManager: {fileID: 1823041897}
@@ -8467,6 +8467,7 @@ MonoBehaviour:
   m_CircuitController: {fileID: 0}
   m_DebuggingSpheres: []
   numPlayersReady: 0
+  gameStarted: 0
   numPlayersFinished: 0
   timersStartTime: []
 --- !u!4 &1839589614

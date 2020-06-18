@@ -165,7 +165,9 @@ public class SetupPlayer : NetworkBehaviour
 
     /// <summary>
     /// Called when the local player object has been set up.
-    /// <para>This happens after OnStartClient(), as it is triggered by an ownership message from the server. This is an appropriate place to activate components or functionality that should only be active for the local player, such as cameras and input.</para>
+    /// <para>This happens after OnStartClient(), as it is triggered by an ownership message from the server.
+    /// This is an appropriate place to activate components or functionality that should only be active for the local player,
+    /// such as cameras and input.</para>
     /// </summary>
     public override void OnStartLocalPlayer()
     {
@@ -273,6 +275,7 @@ public class SetupPlayer : NetworkBehaviour
     {
         GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
         m_Color = color;
+        this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[color].GetComponent<MeshRenderer>().sharedMaterials;
     }
 
     #endregion Commands

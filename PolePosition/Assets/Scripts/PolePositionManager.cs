@@ -31,9 +31,9 @@ public class PolePositionManager : NetworkBehaviour
     public GameObject[] m_DebuggingSpheres;
 
     [SyncVar(hook = nameof(CheckPlayersReady))] public int numPlayersReady;
-    
+
     // "true" si ya ha comezado la vuelta atrás, "false" en caso contrario
-    public bool GameStarted { get; set; }
+    [SyncVar] public bool gameStarted = false;
 
     // Espera a que todos los jugadores (menos el últimmo) hayan terminado la carrera para poner el ranking
     public int numPlayersFinished;
@@ -70,7 +70,7 @@ public class PolePositionManager : NetworkBehaviour
         {
             playersConnected[i] = false;
         }
-        GameStarted = false;
+        gameStarted = false;
     }
 
     private void Update()
@@ -84,6 +84,19 @@ public class PolePositionManager : NetworkBehaviour
         }
 
         UpdateRaceProgress();
+    }
+
+    public override void OnStartClient()
+    {
+        if (gameStarted)
+        {
+            Debug.Log("F");
+            NetworkManager.singleton.StopClient();
+        }
+        else
+        {
+            uiManager.StartSelectMenu();
+        }
     }
 
     #endregion Start And Update
@@ -180,7 +193,7 @@ public class PolePositionManager : NetworkBehaviour
         numPlayers = 0;
         numPlayersReady = 0;
         numPlayersFinished = 0;
-        GameStarted = false;
+        gameStarted = false;
         for (int i = 0; i < playersConnected.Length; i++)
         {
             playersConnected[i] = false;
@@ -204,17 +217,7 @@ public class PolePositionManager : NetworkBehaviour
     /// <param name="newPlayersReady"></param>
     public void CheckPlayersReady(int oldPlayersReady, int newPlayersReady)
     {
-        if (!GameStarted)
-        {
-            if ((newPlayersReady == numPlayers) && (numPlayers >= minPlayers))
-            {
-                GameStarted = true;
-                if (isServer)
-                {
-                    RpcStartCountDown();
-                }
-            }
-        }
+        Debug.Log("Hola");
     }
 
     [ClientRpc]
@@ -226,6 +229,7 @@ public class PolePositionManager : NetworkBehaviour
         //new Task(() => CountDown(startTime)).Start();
     }
 
+    /*
     public void CountDown(float time)
     {
         Debug.Log("3!");
@@ -247,6 +251,7 @@ public class PolePositionManager : NetworkBehaviour
         Thread.Sleep(1000);
         new Task(() => OnCountDownDelegate("")).Start();
     }
+    */
 
     public void TimerCountDown(float s)
     {
@@ -473,6 +478,18 @@ public class PolePositionManager : NetworkBehaviour
         PlayerInfo playerInfo = player.GetComponent<PlayerInfo>();
         playerInfo.IsReadyToStart = true;
         numPlayersReady++;
+
+        if (!gameStarted)
+        {
+            if ((numPlayersReady == numPlayers) && (numPlayers >= minPlayers))
+            {
+                gameStarted = true;
+                if (isServer)
+                {
+                    RpcStartCountDown();
+                }
+            }
+        }
     }
 
     #endregion Commands

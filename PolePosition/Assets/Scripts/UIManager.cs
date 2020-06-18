@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     public bool showGUI = true;
 
     private NetworkManager m_NetworkManager;
+    private PolePositionManager m_PolePositionManager;
 
     #region Unity Canvas Variables
     [Header("Main Menu")] [SerializeField] private GameObject mainMenu;
@@ -49,6 +50,7 @@ public class UIManager : MonoBehaviour
     private void Awake()
     {
         m_NetworkManager = FindObjectOfType<NetworkManager>();
+        m_PolePositionManager = FindObjectOfType<PolePositionManager>();
     }
 
     private void Start()
@@ -100,7 +102,7 @@ public class UIManager : MonoBehaviour
     /// del menú de selección la comprobación de que se haya introducido 
     /// el campo username bien para poder empezar con la carrera
     /// </summary>
-    private void StartSelectMenu()
+    public void StartSelectMenu()
     {
         readyButton.onClick.AddListener(() => CheckData());
         ActivateSelectHUD();
@@ -164,7 +166,6 @@ public class UIManager : MonoBehaviour
             m_NetworkManager.networkAddress = inputFieldIP.text;
         }
         m_NetworkManager.StartClient();
-        StartSelectMenu();
     }
 
     private void StartServer()

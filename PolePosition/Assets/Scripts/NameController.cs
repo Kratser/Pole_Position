@@ -8,12 +8,13 @@ public class NameController : MonoBehaviour
 
     // Texto que aparece sobre el coche del juegador
     public Text PlayerName;
+    public float height = 55;
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         // Nombre del jugador que aparece sobre su coche. Cambiamos posiciones con respecto a la cámara.
         Vector3 namePos = Camera.main.WorldToScreenPoint(this.transform.position);
-        PlayerName.transform.position = namePos + new Vector3(0, 55, 0);
+        PlayerName.transform.position = namePos + new Vector3(0, height, 0);
     }
 }
