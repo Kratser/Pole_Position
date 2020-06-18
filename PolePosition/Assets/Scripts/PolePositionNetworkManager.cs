@@ -23,7 +23,7 @@ namespace Mirror
         {
             
             /**/
-            if (!m_PolePositionManager.gameStarted)
+            if (!m_PolePositionManager.gameStarted && m_PolePositionManager.numPlayers < 4)
             {
                 Transform startPos = GetStartPosition();
                 GameObject player = startPos != null

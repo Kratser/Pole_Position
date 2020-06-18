@@ -200,6 +200,7 @@ public class PolePositionManager : NetworkBehaviour
         {
             playersConnected[i] = false;
         }
+        Camera.main.gameObject.GetComponent<CameraController>().m_Focus = null;
         Camera.main.gameObject.GetComponent<CameraController>().ResetCamera();
         uiManager.ActivateMainMenu();
     }

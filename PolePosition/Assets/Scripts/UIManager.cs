@@ -23,8 +23,8 @@ public class UIManager : MonoBehaviour
     [Header("Select Menu")] [SerializeField] private GameObject selectMenu;
     [SerializeField] public Button changeColorButton;
     [SerializeField] public Button readyButton;
-    [SerializeField] private InputField inputFieldName;
-    [SerializeField] public string PlayerUserName { get; set; }
+    [SerializeField] public InputField inputFieldName;
+    //[SerializeField] public string PlayerUserName { get; set; }
     [SerializeField] public int PlayerColor { get; set; }
     [SerializeField] private Text errorInsertNameText;
 
@@ -152,8 +152,7 @@ public class UIManager : MonoBehaviour
     {
         if (inputFieldName.text.Length != 0)
         {
-            // Comprobar el nombre con los demás usuarios
-            PlayerUserName = inputFieldName.text;
+            // Comprobar el nombre con los demás usuarios JAJA
             ActivateInGameHUD();
         }
         else
@@ -242,7 +241,7 @@ public class UIManager : MonoBehaviour
 
     public void ChangeRankingHUD(string[] positions, string[] times)
     {
-        exitButton.onClick.AddListener(() => m_PolePositionManager.ResetGame());
+        exitButton.onClick.AddListener(() => CloseConnection());
         textFinish.fontSize = 80;
         textFinish.text = "Ranking";
         exitButton.gameObject.SetActive(true);

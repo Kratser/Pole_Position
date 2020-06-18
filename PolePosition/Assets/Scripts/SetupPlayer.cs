@@ -46,10 +46,10 @@ public class SetupPlayer : NetworkBehaviour
         if (isLocalPlayer)
         {
             m_UIManager.CheckData();
-            m_PlayerInfo.Name = m_UIManager.PlayerUserName;
+            m_PlayerInfo.Name = m_UIManager.inputFieldName.text;
             CmdNameToServer(m_PlayerInfo.Name);
 
-            if (m_PlayerInfo.Name != null)
+            if (m_PlayerInfo.Name.Length != 0)
             {
                 CmdNewPlayerReady();
             }
@@ -137,6 +137,8 @@ public class SetupPlayer : NetworkBehaviour
                     }
                 }
                 // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
+                Debug.Log("No pueden entrar más jugadores a la partida");
+                m_UIManager.StartErrorMenu("No pueden entrar más jugadores a la partida");
             }
             else
             {
@@ -175,6 +177,8 @@ public class SetupPlayer : NetworkBehaviour
                 }
             }
             // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
+            Debug.Log("No pueden entrar más jugadores a la partida");
+            m_UIManager.StartErrorMenu("No pueden entrar más jugadores a la partida");
         }
         else
         {
@@ -184,6 +188,8 @@ public class SetupPlayer : NetworkBehaviour
                 m_UIManager.StartErrorMenu("La partida ya ha comenzado");
             }
         }
+
+
     }
 
     /// <summary>
