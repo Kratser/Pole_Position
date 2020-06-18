@@ -10,8 +10,8 @@ public class UIManager : MonoBehaviour
 {
     public bool showGUI = true;
 
-    private NetworkManager m_NetworkManager;
-    private PolePositionManager m_PolePositionManager;
+    private PolePositionNetworkManager m_NetworkManager;
+    public PolePositionManager m_PolePositionManager;
 
     #region Unity Canvas Variables
     [Header("Main Menu")] [SerializeField] private GameObject mainMenu;
@@ -45,12 +45,16 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text textOrder;
     [SerializeField] private Button closeButton;
 
+    [Header("ErrorMenu")] [SerializeField] private GameObject errorMenu;
+    [SerializeField] private Text textErrorMsg;
+    [SerializeField] private Button returnButton;
+
     #endregion
 
     private void Awake()
     {
-        m_NetworkManager = FindObjectOfType<NetworkManager>();
-        m_PolePositionManager = FindObjectOfType<PolePositionManager>();
+        if (m_NetworkManager == null) m_NetworkManager = FindObjectOfType<PolePositionNetworkManager>();
+        if (m_PolePositionManager == null) m_PolePositionManager = FindObjectOfType<PolePositionManager>();
     }
 
     private void Start()
@@ -70,6 +74,7 @@ public class UIManager : MonoBehaviour
         rankingHUD.SetActive(false);
         selectMenu.SetActive(false);
         serverHUD.SetActive(false);
+        errorMenu.SetActive(false);
     }
 
     private void ActivateInGameHUD()
@@ -95,6 +100,13 @@ public class UIManager : MonoBehaviour
         mainMenu.SetActive(false);
     }
 
+    public void ActivateErrorMenu()
+    {
+        errorMenu.SetActive(true);
+        mainMenu.SetActive(false);
+        selectMenu.SetActive(false);
+    }
+
     #endregion
 
     /// <summary>
@@ -104,7 +116,6 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void StartSelectMenu()
     {
-        readyButton.onClick.AddListener(() => CheckData());
         ActivateSelectHUD();
     }
 
@@ -114,17 +125,22 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void StartServerMenu()
     {
-        closeButton.onClick.AddListener(() => CloseServer());
+        closeButton.onClick.AddListener(() => CloseConnection());
         ActivateServerHUD();
         Camera.main.transform.position = new Vector3(-106, 13, 87);
         Camera.main.transform.rotation = Quaternion.Euler(28, 54, 0);
     }
 
-    private void CloseServer()
+    public void StartErrorMenu(string errorMsg)
     {
-        NetworkManager.singleton.StopServer();
-        ActivateMainMenu();
-        Camera.main.GetComponent<CameraController>().ResetCamera();
+        returnButton.onClick.AddListener(() => CloseConnection());
+        textErrorMsg.text = errorMsg;
+        ActivateErrorMenu();
+    }
+
+    private void CloseConnection()
+    {
+        m_PolePositionManager.ResetGame();
     }
 
     /// <summary>
@@ -226,6 +242,7 @@ public class UIManager : MonoBehaviour
 
     public void ChangeRankingHUD(string[] positions, string[] times)
     {
+        exitButton.onClick.AddListener(() => m_PolePositionManager.ResetGame());
         textFinish.fontSize = 80;
         textFinish.text = "Ranking";
         exitButton.gameObject.SetActive(true);

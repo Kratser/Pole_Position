@@ -21,7 +21,7 @@ public class SetupPlayer : NetworkBehaviour
     [SyncVar(hook = nameof(SetColor))] private int m_Color;
 
     private UIManager m_UIManager;
-    private NetworkManager m_NetworkManager;
+    private PolePositionNetworkManager m_NetworkManager;
     private PlayerController m_PlayerController;
     private PlayerInfo m_PlayerInfo;
     private NameController m_NameController;
@@ -45,6 +45,7 @@ public class SetupPlayer : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
+            m_UIManager.CheckData();
             m_PlayerInfo.Name = m_UIManager.PlayerUserName;
             CmdNameToServer(m_PlayerInfo.Name);
 
@@ -122,18 +123,25 @@ public class SetupPlayer : NetworkBehaviour
         if (isServerOnly)
         {
             //m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
-            for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
+            if (!m_PolePositionManager.gameStarted)
             {
-                if (!m_PolePositionManager.playersConnected[i])
+                for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
                 {
-                    m_PlayerInfo.ID = i;
-                    Debug.LogWarning("Id del cliente nuevo: " + m_PlayerInfo.ID);
-                    m_PlayerInfo.CurrentLap = 0;
-                    m_PolePositionManager.AddPlayer(m_PlayerInfo);
-                    return;
+                    if (!m_PolePositionManager.playersConnected[i])
+                    {
+                        m_PlayerInfo.ID = i;
+                        Debug.LogWarning("Id del cliente nuevo: " + m_PlayerInfo.ID);
+                        m_PlayerInfo.CurrentLap = 0;
+                        m_PolePositionManager.AddPlayer(m_PlayerInfo);
+                        return;
+                    }
                 }
+                // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
             }
-            // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
+            else
+            {
+                Debug.Log("Partida Empezada");
+            }
         }
     }
 
@@ -145,22 +153,37 @@ public class SetupPlayer : NetworkBehaviour
     {
         base.OnStartClient();
         //m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
-        for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
+        if (!m_PolePositionManager.gameStarted)
         {
-            if (!m_PolePositionManager.playersConnected[i])
+            for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
             {
-                m_PlayerInfo.ID = i;
-                m_PlayerInfo.CurrentLap = 0;
+                if (!m_PolePositionManager.playersConnected[i])
+                {
+                    m_PlayerInfo.ID = i;
+                    m_PlayerInfo.CurrentLap = 0;
 
-                m_UIManager.readyButton.onClick.AddListener(() => PlayerReady());
-                m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
+                    m_UIManager.readyButton.onClick.AddListener(() => PlayerReady());
+                    m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
 
-                // Añadir jugador a la partida
-                m_PolePositionManager.AddPlayer(m_PlayerInfo);
-                return;
+                    // Añadir jugador a la partida
+                    m_PolePositionManager.AddPlayer(m_PlayerInfo);
+                    if (isLocalPlayer)
+                    {
+                        m_UIManager.StartSelectMenu();
+                    }
+                    return;
+                }
+            }
+            // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
+        }
+        else
+        {
+            if (isLocalPlayer)
+            {
+                Debug.Log("Partida Empezada");
+                m_UIManager.StartErrorMenu("La partida ya ha comenzado");
             }
         }
-        // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
     /// <summary>
@@ -187,7 +210,7 @@ public class SetupPlayer : NetworkBehaviour
     {
         m_PlayerInfo = GetComponent<PlayerInfo>();
         m_PlayerController = GetComponent<PlayerController>();
-        m_NetworkManager = FindObjectOfType<NetworkManager>();
+        m_NetworkManager = FindObjectOfType<PolePositionNetworkManager>();
         m_PolePositionManager = FindObjectOfType<PolePositionManager>();
         m_UIManager = FindObjectOfType<UIManager>();
         m_NameController = GetComponent<NameController>();

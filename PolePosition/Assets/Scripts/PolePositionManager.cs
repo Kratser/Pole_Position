@@ -17,7 +17,7 @@ public class PolePositionManager : NetworkBehaviour
     public int numPlayers;
     public int minPlayers = 2;
     public int maxLaps = 4;
-    public NetworkManager networkManager;
+    public PolePositionNetworkManager networkManager;
     public UIManager uiManager;
   
     public delegate void OnUIChangeEvent(string newOrder);
@@ -48,7 +48,7 @@ public class PolePositionManager : NetworkBehaviour
 
     private void Awake()
     {
-        if (networkManager == null) networkManager = FindObjectOfType<NetworkManager>();
+        if (networkManager == null) networkManager = FindObjectOfType<PolePositionNetworkManager>();
         if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
 
         //Delegados UI
@@ -88,6 +88,7 @@ public class PolePositionManager : NetworkBehaviour
 
     public override void OnStartClient()
     {
+        /*
         if (gameStarted)
         {
             Debug.Log("F");
@@ -97,6 +98,7 @@ public class PolePositionManager : NetworkBehaviour
         {
             uiManager.StartSelectMenu();
         }
+        */
     }
 
     #endregion Start And Update

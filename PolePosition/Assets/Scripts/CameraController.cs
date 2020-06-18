@@ -64,6 +64,6 @@ public class CameraController : MonoBehaviour
     public void ResetCamera()
     {
         this.transform.position = new Vector3(0.0f, 2.82f, -10.0f);
-        this.transform.rotation = new Quaternion(0, 0, 0, 0);
+        this.transform.rotation = Quaternion.Euler(0, 0, 0);
     }
 }
