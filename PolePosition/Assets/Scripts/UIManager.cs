@@ -33,6 +33,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text textLaps;
     [SerializeField] private Text textPosition;
     [SerializeField] public Text textCountDown;
+    [SerializeField] public Text textTimeLaps;
 
     [Header("RankingHUD")] [SerializeField] private GameObject rankingHUD;
     [SerializeField] private Button exitButton;
@@ -49,7 +50,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text textErrorMsg;
     [SerializeField] private Button returnButton;
 
-    #endregion
+    #endregion Unity Canvas Variables
 
     private void Awake()
     {
@@ -107,7 +108,7 @@ public class UIManager : MonoBehaviour
         selectMenu.SetActive(false);
     }
 
-    #endregion
+    #endregion Activate Menus
 
     /// <summary>
     /// Se inicia el menu de selección y le asignamos al botón ready 
@@ -189,7 +190,7 @@ public class UIManager : MonoBehaviour
         StartServerMenu();
     }
 
-    #endregion
+    #endregion Start Network
 
     #region UI Delegates
 
@@ -267,5 +268,10 @@ public class UIManager : MonoBehaviour
         textCountDown.text = msg;
     }
 
-    #endregion
+    public void UpdateTimeLap (string time)
+    {
+        textTimeLaps.text = time;
+    }
+
+    #endregion UI Delegates
 }

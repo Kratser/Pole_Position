@@ -23,6 +23,8 @@ public class PlayerInfo : MonoBehaviour
 
     public float FinishTime { get; set; }
 
+    public float LapTime { get; set; }
+
     public bool IsReadyToStart { get; set; }
 
     public override string ToString()

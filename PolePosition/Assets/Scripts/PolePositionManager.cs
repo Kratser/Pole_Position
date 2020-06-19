@@ -4,9 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Mirror;
 using UnityEngine;
+
+//overheadlights
 
 public class PolePositionManager : NetworkBehaviour
 {
@@ -25,12 +28,13 @@ public class PolePositionManager : NetworkBehaviour
     public OnUIChangeEvent OnCountDownDelegate;
     public OnUIChangeEvent OnUpdateLapDelegate;
     public OnUIChangeEvent OnWrongDirectionDelegate;
+    public OnUIChangeEvent OnLapTimeDelegate;
 
     public List<PlayerInfo> m_Players = new List<PlayerInfo>(4);
     public CircuitController m_CircuitController;
     public GameObject[] m_DebuggingSpheres;
 
-    [SyncVar(hook = nameof(CheckPlayersReady))] public int numPlayersReady;
+    [SyncVar] public int numPlayersReady;
 
     // "true" si ya ha comezado la vuelta atrás, "false" en caso contrario
     [SyncVar] public bool gameStarted = false;
@@ -41,6 +45,8 @@ public class PolePositionManager : NetworkBehaviour
     public delegate void CheckTimerEvent(float s);
     public CheckTimerEvent CheckTimerDelegate;
     public List<float> timersStartTime = new List<float>();
+    public Stopwatch timer = new Stopwatch();
+
 
     #endregion Variables
 
@@ -57,6 +63,7 @@ public class PolePositionManager : NetworkBehaviour
         OnCountDownDelegate += uiManager.CountDown;
         OnUpdateLapDelegate += uiManager.UpdateLap;
         OnWrongDirectionDelegate += uiManager.WrongDirection;
+        OnLapTimeDelegate += uiManager.UpdateTimeLap;
 
         if (m_CircuitController == null) m_CircuitController = FindObjectOfType<CircuitController>();
 
@@ -129,7 +136,7 @@ public class PolePositionManager : NetworkBehaviour
         
         if (playerRemoved)
         {
-            Debug.LogWarning("Jugador eliminado");
+            UnityEngine.Debug.LogWarning("Jugador eliminado");
             CheckPlayersRemoved(player);
         }
     }
@@ -174,26 +181,26 @@ public class PolePositionManager : NetworkBehaviour
     /// </summary>
     public void ResetGame()
     {
-        if (isServer)
-        {
-            if (isServerOnly)
+
+        try {
+            if (isServer)
             {
-                NetworkManager.singleton.StopServer();
-                Debug.LogWarning("Tas quedao solo server, te echo");
+                if (isServerOnly)
+                {
+                    NetworkManager.singleton.StopServer();
+                    UnityEngine.Debug.LogWarning("Se ha quedado el servidor solo");
+                }
+                else
+                {
+                    NetworkManager.singleton.StopHost();
+                    UnityEngine.Debug.LogWarning("Se ha quedado el host solo");
+                }
             }
             else
             {
-                NetworkManager.singleton.StopHost();
-                Debug.LogWarning("Tas quedao solo host, te echo");
+                NetworkManager.singleton.StopClient();
+                UnityEngine.Debug.LogWarning("Se ha cerrado el servidor");
             }
-        }
-        else
-        {
-            NetworkManager.singleton.StopClient();
-            Debug.LogWarning("Tas quedao sin server, a tomar por culo todos");
-        }
-
-        try {
             m_Players.Clear();
             numPlayers = 0;
             numPlayersReady = 0;
@@ -208,7 +215,7 @@ public class PolePositionManager : NetworkBehaviour
             uiManager.ActivateMainMenu();
         }
         catch(NullReferenceException ex){
-            Debug.Log(ex);
+            UnityEngine.Debug.Log(ex);
         }
     }
 
@@ -218,50 +225,13 @@ public class PolePositionManager : NetworkBehaviour
 
     #region Players are ready --> CountDown
 
-    /// <summary>
-    /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
-    /// The Hook is always called after the property value is set. You don't need to set it yourself.
-    /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
-    /// </summary>
-    /// <param name="oldPlayersReady"></param>
-    /// <param name="newPlayersReady"></param>
-    public void CheckPlayersReady(int oldPlayersReady, int newPlayersReady)
-    {
-        Debug.Log("Hola");
-    }
-
     [ClientRpc]
     public void RpcStartCountDown()
     {
         float startTime = Time.time;
         timersStartTime.Add(startTime);
         CheckTimerDelegate += TimerCountDown;
-        //new Task(() => CountDown(startTime)).Start();
     }
-
-    /*
-    public void CountDown(float time)
-    {
-        Debug.Log("3!");
-        new Task(() => OnCountDownDelegate("3!")).Start();
-        Thread.Sleep(1000);
-        Debug.Log("2!");
-        new Task(() => OnCountDownDelegate("2!")).Start();
-        Thread.Sleep(1000);
-        Debug.Log("1!");
-        new Task(() => OnCountDownDelegate("1!")).Start();
-        Thread.Sleep(1000);
-        for (int i = 0; i < m_Players.Count; i++)
-        {
-            m_Players[i].StartTime = time;
-            m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
-        }
-        Debug.Log("GO!");
-        new Task(() => OnCountDownDelegate("GO!")).Start();
-        Thread.Sleep(1000);
-        new Task(() => OnCountDownDelegate("")).Start();
-    }
-    */
 
     public void TimerCountDown(float s)
     {
@@ -274,7 +244,7 @@ public class PolePositionManager : NetworkBehaviour
         {
             OnCountDownDelegate("2!");
         }
-        else if(elapsedTime >= 2 && elapsedTime < 3)
+        else if (elapsedTime >= 2 && elapsedTime < 3)
         {
             OnCountDownDelegate("1!");
         }
@@ -282,10 +252,11 @@ public class PolePositionManager : NetworkBehaviour
         {
             OnCountDownDelegate("GO!");
             for (int i = 0; i < m_Players.Count; i++)
-            {
-                m_Players[i].StartTime = timersStartTime[0];
+            { 
                 m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
             }
+            //Laps timer
+            timer.Start();
         }
         else
         {
@@ -330,6 +301,14 @@ public class PolePositionManager : NetworkBehaviour
             myRaceOrder += m_Players[i].Name + " ";
         }
         OnOrderChangeDelegate(myRaceOrder);
+
+       /*for (int i = 0; i < m_Players.Count; i++)
+       {
+            if (m_Players[i].gameObject.GetComponent<SetupPlayer>().isLocalPlayer && m_Players[i].CurrentLap > 0)
+            {
+                OnLapTimeDelegate(FloatToTime((float)timer.Elapsed.TotalSeconds - m_Players[i].LapTime));
+            }
+        }*/
 
         /* 
          * Cuando han terminado todos los jugadores menos el último activamos el HUD
@@ -413,6 +392,8 @@ public class PolePositionManager : NetworkBehaviour
         else if (distance < -300)
         {
             m_Players[ID].CurrentLap++;
+            m_Players[ID].LapTime = (float)timer.Elapsed.TotalSeconds - m_Players[ID].LapTime;
+            OnLapTimeDelegate(FloatToTime(m_Players[ID].LapTime));
 
             if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
             {
@@ -432,8 +413,7 @@ public class PolePositionManager : NetworkBehaviour
                 {
                     m_Players[ID].GetComponent<PlayerController>().enabled = false;
                     uiManager.ActivateRankingHUD();
-                    //esperar al resto de players para mostrar ranqueen
-                    Debug.Log(m_Players[ID].FinishTime);
+                    UnityEngine.Debug.Log(m_Players[ID].FinishTime);
                 }
             }
         }
