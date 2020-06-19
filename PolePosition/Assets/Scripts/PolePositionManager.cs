@@ -120,7 +120,7 @@ public class PolePositionManager : NetworkBehaviour
     {
         m_Players.Add(player);
         // Inicializamos el segmento del jugador al segmento donde se hace el spawn del jugador
-        m_Players[m_Players.Count - 1].CurrentSegment = ComputeCarArcLength(m_Players.Count - 1);
+        m_Players[m_Players.Count - 1].CurrentSegment = ComputeCarArcLength(m_Players.Count - 1, false);
         playersConnected[player.ID] = true;
         numPlayers++;
     }
@@ -292,7 +292,7 @@ public class PolePositionManager : NetworkBehaviour
 
         for (int i = 0; i < m_Players.Count; ++i)
         {
-            ComputeCarArcLength(i);
+            ComputeCarArcLength(i, true);
         }
 
         m_Players.Sort((P1, P2) => ComparePlayers(P1, P2));
@@ -340,7 +340,7 @@ public class PolePositionManager : NetworkBehaviour
     /// Método que calcula a qué distancia se encuentra el jugador de la meta
     /// </summary>
     /// <param name="ID">Id del jugador dentro de la lista m_Players</param>
-    int ComputeCarArcLength(int ID)
+    int ComputeCarArcLength(int ID, bool check)
     {
         // Compute the projection of the car position to the closest circuit 
         // path segment and accumulate the arc-length along of the car along
@@ -360,10 +360,12 @@ public class PolePositionManager : NetworkBehaviour
 
         float distance = minArcL - m_Players[ID].TotalDistance;
 
-        CheckLaps(ID, distance, minArcL);
+        if (check)
+        {
+            CheckLaps(ID, distance, minArcL, segIdx);
 
-        CheckDirection(ID, segIdx);
-
+            CheckDirection(ID, segIdx);
+        }
         return segIdx;
     }
 
@@ -373,15 +375,17 @@ public class PolePositionManager : NetworkBehaviour
     /// <param name="ID">Id del jugador dentro de la lista m_Players</param>
     /// <param name="distance">Distancia recorrida desde el update anterior</param>
     /// <param name="minArcL">Distancia de la meta al jugador</param>
-    public void CheckLaps(int ID, float distance, float minArcL)
+    public void CheckLaps(int ID, float distance, float minArcL, int segIdx)
     {
         // Vuelta hacia atrás
-        if (distance > 300)
+        if (m_Players[ID].CurrentSegment - segIdx == -(m_CircuitController.m_CircuitPath.positionCount - 2) /*distance > 300*/)
         {
             if (isServer)
             {
+                Debug.Log("NUEVA VUELTAAAA");
                 m_Players[ID].CurrentLap--;
                 RpcNewLap(m_Players[ID].CurrentLap, ID);
+                
 
                 // Para que no empiece en una vuelta menor que 0, y que no se puedan acumular vueltas negativas
                 if (m_Players[ID].CurrentLap < 0)
@@ -397,10 +401,11 @@ public class PolePositionManager : NetworkBehaviour
             m_Players[ID].TotalDistance = minArcL;
         }
         // Vuelta hacia delante
-        else if (distance < -300)
+        else if (m_Players[ID].CurrentSegment - segIdx == (m_CircuitController.m_CircuitPath.positionCount - 2)/*distance < -300*/)
         {
             if (isServer)
             {
+                Debug.Log("NUEVA VUELTAAAA");
                 m_Players[ID].CurrentLap++;
                 RpcNewLap(m_Players[ID].CurrentLap, ID);
 
@@ -502,8 +507,9 @@ public class PolePositionManager : NetworkBehaviour
     [ClientRpc]
     public void RpcNewLap(int lap, int playerID)
     {
+        Debug.Log(m_Players.Count);
         m_Players[playerID].CurrentLap = lap;
-        print(m_Players[playerID].Name + ": " + m_Players[playerID].CurrentLap + ", " 
+        Debug.Log(m_Players[playerID].Name + ": " + m_Players[playerID].CurrentLap + ", " 
             + m_Players[playerID].gameObject.GetComponent<NetworkIdentity>().isLocalPlayer);
         if (m_Players[playerID].gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
         {
