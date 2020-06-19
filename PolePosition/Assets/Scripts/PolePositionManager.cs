@@ -19,7 +19,7 @@ public class PolePositionManager : NetworkBehaviour
     public bool[] playersConnected = new bool[4];
     public int numPlayers;
     public int minPlayers = 2;
-    public int maxLaps = 4;
+    public int maxLaps = 2;
     public PolePositionNetworkManager networkManager;
     public UIManager uiManager;
   
@@ -41,6 +41,7 @@ public class PolePositionManager : NetworkBehaviour
 
     // Espera a que todos los jugadores (menos el últimmo) hayan terminado la carrera para poner el ranking
     public int numPlayersFinished;
+    public List<PlayerInfo> finishOrder = new List<PlayerInfo>(); 
 
     public delegate void CheckTimerEvent(float s);
     public CheckTimerEvent CheckTimerDelegate;
@@ -207,6 +208,7 @@ public class PolePositionManager : NetworkBehaviour
             numPlayers = 0;
             numPlayersReady = 0;
             numPlayersFinished = 0;
+            finishOrder.Clear();
 
             OnOrderChangeDelegate("");
             OnCountDownDelegate("");
@@ -308,7 +310,15 @@ public class PolePositionManager : NetworkBehaviour
         string myRaceOrder = "";
         for (int i = 0; i < m_Players.Count; i++)
         {
-            myRaceOrder += m_Players[i].Name + " ";
+            // Que concuerden las posiciones finales con el orden de carrera
+            if (finishOrder.Count >= i + 1)
+            {
+                myRaceOrder += finishOrder[i].Name + " ";
+            }
+            else
+            {
+                myRaceOrder += m_Players[i].Name + " ";
+            }
         }
         OnOrderChangeDelegate(myRaceOrder);
         /*
@@ -328,13 +338,22 @@ public class PolePositionManager : NetworkBehaviour
         {
             numPlayersFinished++;
 
+            // Añadimos a la lista de las posiciones finales el jugador que no ha conseguido pasar la meta
+            for (int i = 0; i < m_Players.Count; i++)
+            {
+                if (m_Players[i].CurrentLap != maxLaps){
+                    finishOrder.Add(m_Players[i]);
+                    break;
+                }
+            }
+
             // Cambiar HUD
             string[] positions = new string[numPlayers];
             string[] times = new string[numPlayers];
             for (int i = 0; i < m_Players.Count; i++)
             {
-                positions[i] = m_Players[i].Name;
-                times[i] = FloatToTime(m_Players[i].FinishTime);
+                positions[i] = finishOrder[i].Name;
+                times[i] = FloatToTime(finishOrder[i].FinishTime);
                 // El jugador que no consigue llegar a la meta no tiene tiempo
                 times[times.Length - 1] = "--:--:--";
             }
@@ -432,6 +451,11 @@ public class PolePositionManager : NetworkBehaviour
                     m_Players[ID].FinishTime = Time.time - m_Players[ID].StartTime;
                     numPlayersFinished++;
                     RpcEndRace(m_Players[ID].FinishTime, numPlayersFinished, m_Players[ID].gameObject);
+
+                    if (isServerOnly)
+                    {
+                        finishOrder.Add(m_Players[ID]);
+                    }
                     /**
                     if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
                     {
@@ -566,6 +590,7 @@ public class PolePositionManager : NetworkBehaviour
         PlayerInfo p_Info = player.GetComponent<PlayerInfo>();
         p_Info.FinishTime = endTime;
         numPlayersFinished = nPlayersFinished;
+        finishOrder.Add(p_Info);
         if (player.GetComponent<NetworkIdentity>().isLocalPlayer)
         {
             player.GetComponent<PlayerController>().enabled = false;
