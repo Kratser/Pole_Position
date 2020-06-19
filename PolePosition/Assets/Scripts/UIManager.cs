@@ -24,7 +24,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] public Button changeColorButton;
     [SerializeField] public Button readyButton;
     [SerializeField] public InputField inputFieldName;
-    //[SerializeField] public string PlayerUserName { get; set; }
     [SerializeField] public int PlayerColor { get; set; }
     [SerializeField] private Text errorInsertNameText;
 
@@ -34,6 +33,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text textPosition;
     [SerializeField] public Text textCountDown;
     [SerializeField] public Text textTimeLaps;
+    [SerializeField] public Image panelWaiting;
 
     [Header("RankingHUD")] [SerializeField] private GameObject rankingHUD;
     [SerializeField] private Button exitButton;

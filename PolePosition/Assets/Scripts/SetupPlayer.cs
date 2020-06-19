@@ -51,6 +51,7 @@ public class SetupPlayer : NetworkBehaviour
 
             if (m_PlayerInfo.Name.Length != 0)
             {
+                m_UIManager.panelWaiting.gameObject.SetActive(true);
                 CmdNewPlayerReady();
             }
         }

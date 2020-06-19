@@ -228,6 +228,7 @@ public class PolePositionManager : NetworkBehaviour
     [ClientRpc]
     public void RpcStartCountDown()
     {
+        uiManager.panelWaiting.gameObject.SetActive(false);
         float startTime = Time.time;
         timersStartTime.Add(startTime);
         CheckTimerDelegate += TimerCountDown;
