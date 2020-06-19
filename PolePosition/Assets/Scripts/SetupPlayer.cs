@@ -138,9 +138,8 @@ public class SetupPlayer : NetworkBehaviour
                         return;
                     }
                 }
-                // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
+                // Si llega aquí es porque están todos los huecos ocupados
                 Debug.Log("No pueden entrar más jugadores a la partida");
-                m_UIManager.StartErrorMenu("No pueden entrar más jugadores a la partida");
             }
             else
             {
@@ -178,16 +177,16 @@ public class SetupPlayer : NetworkBehaviour
                     return;
                 }
             }
-            // Si llega aquí es porque están todos los huecos ocupados !!!!!!!!!!!!!!!!!!!!!!!!!!
+            // Si llega aquí es porque están todos los huecos ocupados
             Debug.Log("No pueden entrar más jugadores a la partida");
-            m_UIManager.StartErrorMenu("No pueden entrar más jugadores a la partida");
+            m_UIManager.StartErrorMenu("The game is full");
         }
         else
         {
             if (isLocalPlayer)
             {
                 Debug.Log("Partida Empezada");
-                m_UIManager.StartErrorMenu("La partida ya ha comenzado");
+                m_UIManager.StartErrorMenu("The game has already started");
             }
         }
 

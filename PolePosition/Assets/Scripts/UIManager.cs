@@ -106,6 +106,7 @@ public class UIManager : MonoBehaviour
         errorMenu.SetActive(true);
         mainMenu.SetActive(false);
         selectMenu.SetActive(false);
+        inGameHUD.SetActive(false);
     }
 
     #endregion Activate Menus

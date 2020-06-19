@@ -156,7 +156,8 @@ public class PolePositionManager : NetworkBehaviour
         playersConnected[player.ID] = false;
         if (numPlayers <= 1)
         {
-            ResetGame();
+            uiManager.StartErrorMenu("The other players have left the game");
+            //ResetGame();
         }
         else
         {
