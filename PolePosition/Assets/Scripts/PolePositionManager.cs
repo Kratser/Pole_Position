@@ -262,6 +262,7 @@ public class PolePositionManager : NetworkBehaviour
                 {
                     m_Players[i].StartTime = timersStartTime[0] + 3; // Se suma 3 por los 3 segundos de cuenta atrás
                     m_Players[i].LapTime = timersStartTime[0] + 3; // Se suma 3 por los 3 segundos de cuenta atrás
+                    m_Players[i].FinishTime = timersStartTime[0] + 3; // Se suma 3 por los 3 segundos de cuenta atrás
                     m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
                 }
             }
@@ -421,7 +422,8 @@ public class PolePositionManager : NetworkBehaviour
                     OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps - 1));
                 }
 
-                m_Players[ID].LapTime = Time.time - m_Players[ID].LapTime;
+                m_Players[ID].LapTime = Time.time - m_Players[ID].FinishTime;
+                m_Players[ID].FinishTime = Time.time;
                 RpcNewLapTime(m_Players[ID].LapTime, m_Players[ID].gameObject);
 
                 //Acabar partida para cada jugador
@@ -527,6 +529,7 @@ public class PolePositionManager : NetworkBehaviour
             {
                 m_Players[i].StartTime = startTime + 3; // Se suma 3 por los 3 segundos de cuenta atrás
                 m_Players[i].LapTime = startTime + 3; // Se suma 3 por los 3 segundos de cuenta atrás
+                m_Players[i].FinishTime = startTime + 3; // Se suma 3 por los 3 segundos de cuenta atrás
                 m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
             }
         }
@@ -550,6 +553,7 @@ public class PolePositionManager : NetworkBehaviour
     {
         PlayerInfo p_Info = player.GetComponent<PlayerInfo>();
         p_Info.LapTime = time;
+        p_Info.FinishTime = Time.time;
         Debug.Log(p_Info.Name + ": " + p_Info.LapTime + ", "
             + player.GetComponent<NetworkIdentity>().isLocalPlayer);
         if (player.GetComponent<NetworkIdentity>().isLocalPlayer)
