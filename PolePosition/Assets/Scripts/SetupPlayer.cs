@@ -288,7 +288,7 @@ public class SetupPlayer : NetworkBehaviour
     [Command]
     public void CmdNewPlayerReady()
     {
-        lock (m_PolePositionManager.myLock)
+        //lock (m_PolePositionManager.myLock)
         {
             GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
             m_PolePositionManager.NewPlayerReady(this.gameObject);

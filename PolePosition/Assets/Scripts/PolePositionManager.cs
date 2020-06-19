@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Mirror;
 using UnityEngine;
@@ -215,7 +214,7 @@ public class PolePositionManager : NetworkBehaviour
             Camera.main.gameObject.GetComponent<CameraController>().ResetCamera();
             uiManager.ActivateMainMenu();
         }
-        catch(NullReferenceException ex){
+        catch(Exception ex){
             UnityEngine.Debug.Log(ex);
         }
     }
@@ -381,7 +380,6 @@ public class PolePositionManager : NetworkBehaviour
             {
                 m_Players[ID].CurrentLap--;
                 RpcNewLap(m_Players[ID].CurrentLap, ID);
-                UnityEngine.Debug.LogWarning("--" + m_Players[ID].CurrentLap);
 
                 // Para que no empiece en una vuelta menor que 0, y que no se puedan acumular vueltas negativas
                 if (m_Players[ID].CurrentLap < 0)
@@ -403,7 +401,6 @@ public class PolePositionManager : NetworkBehaviour
             {
                 m_Players[ID].CurrentLap++;
                 RpcNewLap(m_Players[ID].CurrentLap, ID);
-                UnityEngine.Debug.LogWarning("++" + m_Players[ID].CurrentLap);
 
                 m_Players[ID].LapTime += Time.time - m_Players[ID].LapTime;
 
@@ -425,7 +422,7 @@ public class PolePositionManager : NetworkBehaviour
                 {
                     m_Players[ID].GetComponent<PlayerController>().enabled = false;
                     uiManager.ActivateRankingHUD();
-                    UnityEngine.Debug.Log(m_Players[ID].FinishTime);
+                    Debug.Log(m_Players[ID].FinishTime);
                 }
             }
         }
@@ -504,8 +501,9 @@ public class PolePositionManager : NetworkBehaviour
     public void RpcNewLap(int lap, int playerID)
     {
         m_Players[playerID].CurrentLap = lap;
-        print("NUEVA VUELTAAA JOPUTA");
-        if (m_Players[playerID].gameObject.GetComponent<SetupPlayer>().isLocalPlayer)
+        print(m_Players[playerID].Name + ": " + m_Players[playerID].CurrentLap + ", " 
+            + m_Players[playerID].gameObject.GetComponent<NetworkIdentity>().isLocalPlayer);
+        if (m_Players[playerID].gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
         {
             OnUpdateLapDelegate("LAP: " + m_Players[playerID].CurrentLap.ToString() + "/" + (maxLaps - 1));
         }
