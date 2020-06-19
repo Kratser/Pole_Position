@@ -46,7 +46,6 @@ public class PolePositionManager : NetworkBehaviour
     public delegate void CheckTimerEvent(float s);
     public CheckTimerEvent CheckTimerDelegate;
     public List<float> timersStartTime = new List<float>();
-    public Stopwatch timer = new Stopwatch();
 
     public UnityEngine.Object myLock = new UnityEngine.Object();
 
@@ -254,11 +253,11 @@ public class PolePositionManager : NetworkBehaviour
         {
             OnCountDownDelegate("GO!");
             for (int i = 0; i < m_Players.Count; i++)
-            { 
+            {
+                m_Players[i].StartTime = timersStartTime[0];
+                m_Players[i].LapTime = timersStartTime[0];
                 m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
             }
-            //Laps timer
-            timer.Start();
         }
         else
         {
@@ -304,13 +303,13 @@ public class PolePositionManager : NetworkBehaviour
         }
         OnOrderChangeDelegate(myRaceOrder);
 
-       /*for (int i = 0; i < m_Players.Count; i++)
+       for (int i = 0; i < m_Players.Count; i++)
        {
             if (m_Players[i].gameObject.GetComponent<SetupPlayer>().isLocalPlayer && m_Players[i].CurrentLap > 0)
             {
-                OnLapTimeDelegate(FloatToTime((float)timer.Elapsed.TotalSeconds - m_Players[i].LapTime));
+                OnLapTimeDelegate(FloatToTime(Time.time - m_Players[i].LapTime));
             }
-        }*/
+        }
 
         /* 
          * Cuando han terminado todos los jugadores menos el último activamos el HUD
@@ -406,8 +405,7 @@ public class PolePositionManager : NetworkBehaviour
                 RpcNewLap(m_Players[ID].CurrentLap, ID);
                 UnityEngine.Debug.LogWarning("++" + m_Players[ID].CurrentLap);
 
-                m_Players[ID].LapTime = (float)timer.Elapsed.TotalSeconds - m_Players[ID].LapTime;
-                OnLapTimeDelegate(FloatToTime(m_Players[ID].LapTime));
+                m_Players[ID].LapTime += Time.time - m_Players[ID].LapTime;
 
                 if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
                 {
@@ -470,7 +468,7 @@ public class PolePositionManager : NetworkBehaviour
         int mins, secs, ms;
         mins = (int)(s % 3600) / 60;
         secs = (int)(s % 60);
-        ms = (int)((s % (int)s) * 1000);
+        ms = (int)((s % 1) * 1000);
         time = mins + ":" + secs + ":" + ms;
         return time;
     }
@@ -500,6 +498,8 @@ public class PolePositionManager : NetworkBehaviour
 
     #endregion Commands
 
+    #region ClientRPCS
+
     [ClientRpc]
     public void RpcNewLap(int lap, int playerID)
     {
@@ -510,4 +510,6 @@ public class PolePositionManager : NetworkBehaviour
             OnUpdateLapDelegate("LAP: " + m_Players[playerID].CurrentLap.ToString() + "/" + (maxLaps - 1));
         }
     }
+
+    #endregion ClientRPCS
 }
