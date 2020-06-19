@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Mirror;
 using UnityEngine;
+using Mirror.Examples.Basic;
 
 //overheadlights
 
@@ -47,6 +48,7 @@ public class PolePositionManager : NetworkBehaviour
     public List<float> timersStartTime = new List<float>();
     public Stopwatch timer = new Stopwatch();
 
+    public UnityEngine.Object myLock = new UnityEngine.Object();
 
     #endregion Variables
 
@@ -376,30 +378,42 @@ public class PolePositionManager : NetworkBehaviour
         // Vuelta hacia atrás
         if (distance > 300)
         {
-            m_Players[ID].CurrentLap--;
-            // Para que no empiece en una vuelta menor que 0, y que no se puedan acumular vueltas negativas
-            if (m_Players[ID].CurrentLap < 0)
+            if (isServer)
             {
-                m_Players[ID].CurrentLap = 0;
-            }
-            if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
-            {
-                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps - 1));
+                m_Players[ID].CurrentLap--;
+                RpcNewLap(m_Players[ID].CurrentLap, ID);
+                UnityEngine.Debug.LogWarning("--" + m_Players[ID].CurrentLap);
+
+                // Para que no empiece en una vuelta menor que 0, y que no se puedan acumular vueltas negativas
+                if (m_Players[ID].CurrentLap < 0)
+                {
+                    m_Players[ID].CurrentLap = 0;
+                    RpcNewLap(m_Players[ID].CurrentLap, ID);
+                }
+                if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
+                {
+                    OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps - 1));
+                }
             }
             m_Players[ID].TotalDistance = minArcL;
         }
         // Vuelta hacia delante
         else if (distance < -300)
         {
-            m_Players[ID].CurrentLap++;
-            m_Players[ID].LapTime = (float)timer.Elapsed.TotalSeconds - m_Players[ID].LapTime;
-            OnLapTimeDelegate(FloatToTime(m_Players[ID].LapTime));
-
-            if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
+            if (isServer)
             {
-                OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps - 1));
-            }
+                m_Players[ID].CurrentLap++;
+                RpcNewLap(m_Players[ID].CurrentLap, ID);
+                UnityEngine.Debug.LogWarning("++" + m_Players[ID].CurrentLap);
 
+                m_Players[ID].LapTime = (float)timer.Elapsed.TotalSeconds - m_Players[ID].LapTime;
+                OnLapTimeDelegate(FloatToTime(m_Players[ID].LapTime));
+
+                if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
+                {
+                    OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps - 1));
+                }
+            }
             m_Players[ID].TotalDistance = minArcL;
             distance = minArcL;
 
@@ -486,4 +500,14 @@ public class PolePositionManager : NetworkBehaviour
 
     #endregion Commands
 
+    [ClientRpc]
+    public void RpcNewLap(int lap, int playerID)
+    {
+        m_Players[playerID].CurrentLap = lap;
+        print("NUEVA VUELTAAA JOPUTA");
+        if (m_Players[playerID].gameObject.GetComponent<SetupPlayer>().isLocalPlayer)
+        {
+            OnUpdateLapDelegate("LAP: " + m_Players[playerID].CurrentLap.ToString() + "/" + (maxLaps - 1));
+        }
+    }
 }

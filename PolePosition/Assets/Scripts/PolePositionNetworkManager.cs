@@ -21,35 +21,36 @@ namespace Mirror
         /// <param name="conn">Connection from client.</param>
         public override void OnServerAddPlayer(NetworkConnection conn)
         {
-            
-            /**/
-            if (!m_PolePositionManager.gameStarted && m_PolePositionManager.numPlayers < 4)
-            {
-                Transform startPos = null;
-                for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
+            lock (m_PolePositionManager.myLock) {
+
+                if (!m_PolePositionManager.gameStarted && m_PolePositionManager.numPlayers < 4)
                 {
-                    if (!m_PolePositionManager.playersConnected[i])
+                    Transform startPos = null;
+                    for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
                     {
-                        startPos = startPositions[i];
-                        break;
+                        if (!m_PolePositionManager.playersConnected[i])
+                        {
+                            startPos = startPositions[i];
+                            break;
+                        }
                     }
+
+                    GameObject player = startPos != null
+                        ? Instantiate(playerPrefab, startPos.position, startPos.rotation)
+                        : Instantiate(playerPrefab);
+
+                    NetworkServer.AddPlayerForConnection(conn, player);
                 }
+                else
+                {
+                    GameObject player = Instantiate(playerPrefab);
 
-                GameObject player = startPos != null
-                    ? Instantiate(playerPrefab, startPos.position, startPos.rotation)
-                    : Instantiate(playerPrefab);
+                    player.SetActive(false);
 
-                NetworkServer.AddPlayerForConnection(conn, player);
+                    NetworkServer.AddPlayerForConnection(conn, player);
+                }
             }
-            else
-            {
-                GameObject player = Instantiate(playerPrefab);
 
-                player.SetActive(false);
-
-                NetworkServer.AddPlayerForConnection(conn, player);
-            }
-            /**/
         }
     }
 }
