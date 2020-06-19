@@ -202,10 +202,18 @@ public class PolePositionManager : NetworkBehaviour
                 NetworkManager.singleton.StopClient();
                 UnityEngine.Debug.LogWarning("Se ha cerrado el servidor");
             }
+
             m_Players.Clear();
             numPlayers = 0;
             numPlayersReady = 0;
             numPlayersFinished = 0;
+
+            OnOrderChangeDelegate("");
+            OnCountDownDelegate("");
+            OnUpdateLapDelegate("LAP: 0/" + (maxLaps - 1));
+            OnWrongDirectionDelegate("");
+            OnLapTimeDelegate("--:--:--");
+
             gameStarted = false;
             for (int i = 0; i < playersConnected.Length; i++)
             {
@@ -225,21 +233,6 @@ public class PolePositionManager : NetworkBehaviour
     #region Methods
 
     #region Players are ready --> CountDown
-
-    [ClientRpc]
-    public void RpcStartCountDown(string timeText, float startTime)
-    {
-        OnCountDownDelegate(timeText);
-        if (timeText.Equals("GO!"))
-        {
-            for (int i = 0; i < m_Players.Count; i++)
-            {
-                m_Players[i].StartTime = startTime + 3; // Se suma 3 por los 3 segundos de cuenta atrás
-                m_Players[i].LapTime = startTime + 3; // Se suma 3 por los 3 segundos de cuenta atrás
-                m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
-            }
-        }
-    }
 
     public void TimerCountDown(float s)
     {
@@ -515,14 +508,29 @@ public class PolePositionManager : NetworkBehaviour
                     CheckTimerDelegate += TimerCountDown;
                     //RpcStartCountDown();
                 }
-                uiManager.panelWaiting.gameObject.SetActive(false);
-            }
+            }    
         }
     }
 
     #endregion Commands
 
     #region ClientRPCS
+
+    [ClientRpc]
+    public void RpcStartCountDown(string timeText, float startTime)
+    {
+        uiManager.panelWaiting.gameObject.SetActive(false);
+        OnCountDownDelegate(timeText);
+        if (timeText.Equals("GO!"))
+        {
+            for (int i = 0; i < m_Players.Count; i++)
+            {
+                m_Players[i].StartTime = startTime + 3; // Se suma 3 por los 3 segundos de cuenta atrás
+                m_Players[i].LapTime = startTime + 3; // Se suma 3 por los 3 segundos de cuenta atrás
+                m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
+            }
+        }
+    }
 
     [ClientRpc]
     public void RpcNewLap(int lap, GameObject player)
@@ -564,3 +572,5 @@ public class PolePositionManager : NetworkBehaviour
 
     #endregion ClientRPCS
 }
+
+            
