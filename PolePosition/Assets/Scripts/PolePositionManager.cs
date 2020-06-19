@@ -227,12 +227,18 @@ public class PolePositionManager : NetworkBehaviour
     #region Players are ready --> CountDown
 
     [ClientRpc]
-    public void RpcStartCountDown()
+    public void RpcStartCountDown(string timeText, float startTime)
     {
-        uiManager.panelWaiting.gameObject.SetActive(false);
-        float startTime = Time.time;
-        timersStartTime.Add(startTime);
-        CheckTimerDelegate += TimerCountDown;
+        OnCountDownDelegate(timeText);
+        if (timeText.Equals("GO!"))
+        {
+            for (int i = 0; i < m_Players.Count; i++)
+            {
+                m_Players[i].StartTime = startTime + 3; // Se suma 3 por los 3 segundos de cuenta atrás
+                m_Players[i].LapTime = startTime + 3; // Se suma 3 por los 3 segundos de cuenta atrás
+                m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
+            }
+        }
     }
 
     public void TimerCountDown(float s)
@@ -240,29 +246,37 @@ public class PolePositionManager : NetworkBehaviour
         float elapsedTime = s - timersStartTime[0];
         if (elapsedTime >= 0 && elapsedTime < 1)
         {
-            OnCountDownDelegate("3!");
+            RpcStartCountDown("3!", timersStartTime[0]);
+            //OnCountDownDelegate("3!");
         }
         else if (elapsedTime >= 1 && elapsedTime < 2)
         {
-            OnCountDownDelegate("2!");
+            RpcStartCountDown("2!", timersStartTime[0]);
+            //OnCountDownDelegate("2!");
         }
         else if (elapsedTime >= 2 && elapsedTime < 3)
         {
-            OnCountDownDelegate("1!");
+            RpcStartCountDown("1!", timersStartTime[0]);
+            //OnCountDownDelegate("1!");
         }
         else if (elapsedTime >= 3 && elapsedTime < 4)
         {
-            OnCountDownDelegate("GO!");
-            for (int i = 0; i < m_Players.Count; i++)
+            RpcStartCountDown("GO!", timersStartTime[0]);
+            //OnCountDownDelegate("GO!");
+            if (isServerOnly)
             {
-                m_Players[i].StartTime = timersStartTime[0];
-                m_Players[i].LapTime = timersStartTime[0];
-                m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
+                for (int i = 0; i < m_Players.Count; i++)
+                {
+                    m_Players[i].StartTime = timersStartTime[0] + 3; // Se suma 3 por los 3 segundos de cuenta atrás
+                    m_Players[i].LapTime = timersStartTime[0] + 3; // Se suma 3 por los 3 segundos de cuenta atrás
+                    m_Players[i].gameObject.GetComponent<SetupPlayer>().StartPlayer();
+                }
             }
         }
         else
         {
-            OnCountDownDelegate("");
+            RpcStartCountDown("", timersStartTime[0]);
+            //OnCountDownDelegate("");
             CheckTimerDelegate -= TimerCountDown;
             timersStartTime.RemoveAt(0);
         }
@@ -303,7 +317,7 @@ public class PolePositionManager : NetworkBehaviour
             myRaceOrder += m_Players[i].Name + " ";
         }
         OnOrderChangeDelegate(myRaceOrder);
-
+        /*
        for (int i = 0; i < m_Players.Count; i++)
        {
             if (m_Players[i].gameObject.GetComponent<SetupPlayer>().isLocalPlayer && m_Players[i].CurrentLap > 0)
@@ -311,7 +325,7 @@ public class PolePositionManager : NetworkBehaviour
                 OnLapTimeDelegate(FloatToTime(Time.time - m_Players[i].LapTime));
             }
         }
-
+        */
         /* 
          * Cuando han terminado todos los jugadores menos el último activamos el HUD
          * con el Ranking y mostramos las posiciones en las que han quedado y cuánto han tardado
@@ -330,8 +344,10 @@ public class PolePositionManager : NetworkBehaviour
                 // El jugador que no consigue llegar a la meta no tiene tiempo
                 times[times.Length - 1] = "--:--:--";
             }
-
-            uiManager.ActivateRankingHUD();
+            if (isClient)
+            {
+                uiManager.ActivateRankingHUD();
+            }
             uiManager.ChangeRankingHUD(positions, times);
         }
     }
@@ -382,16 +398,15 @@ public class PolePositionManager : NetworkBehaviour
         {
             if (isServer)
             {
-                Debug.Log("NUEVA VUELTAAAA");
                 m_Players[ID].CurrentLap--;
-                RpcNewLap(m_Players[ID].CurrentLap, ID);
+                RpcNewLap(m_Players[ID].CurrentLap, m_Players[ID].gameObject);
                 
 
                 // Para que no empiece en una vuelta menor que 0, y que no se puedan acumular vueltas negativas
                 if (m_Players[ID].CurrentLap < 0)
                 {
                     m_Players[ID].CurrentLap = 0;
-                    RpcNewLap(m_Players[ID].CurrentLap, ID);
+                    RpcNewLap(m_Players[ID].CurrentLap, m_Players[ID].gameObject);
                 }
                 if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
                 {
@@ -405,33 +420,35 @@ public class PolePositionManager : NetworkBehaviour
         {
             if (isServer)
             {
-                Debug.Log("NUEVA VUELTAAAA");
                 m_Players[ID].CurrentLap++;
-                RpcNewLap(m_Players[ID].CurrentLap, ID);
-
-                m_Players[ID].LapTime += Time.time - m_Players[ID].LapTime;
+                RpcNewLap(m_Players[ID].CurrentLap, m_Players[ID].gameObject);
 
                 if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
                 {
                     OnUpdateLapDelegate("LAP: " + m_Players[ID].CurrentLap.ToString() + "/" + (maxLaps - 1));
                 }
+
+                m_Players[ID].LapTime = Time.time - m_Players[ID].LapTime;
+                RpcNewLapTime(m_Players[ID].LapTime, m_Players[ID].gameObject);
+
+                //Acabar partida para cada jugador
+                if (m_Players[ID].CurrentLap == maxLaps)
+                {
+                    m_Players[ID].FinishTime = Time.time - m_Players[ID].StartTime;
+                    numPlayersFinished++;
+                    RpcEndRace(m_Players[ID].FinishTime, numPlayersFinished, m_Players[ID].gameObject);
+                    /**
+                    if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
+                    {
+                        m_Players[ID].GetComponent<PlayerController>().enabled = false;
+                        uiManager.ActivateRankingHUD();
+                        Debug.Log(m_Players[ID].FinishTime);
+                    }
+                    /**/
+                }
             }
             m_Players[ID].TotalDistance = minArcL;
             distance = minArcL;
-
-            //Acabar partida para cada jugador
-            if (m_Players[ID].CurrentLap == maxLaps)
-            {
-                m_Players[ID].FinishTime = Time.time - m_Players[ID].StartTime;
-                numPlayersFinished++;
-
-                if (m_Players[ID].GetComponent<NetworkIdentity>().isLocalPlayer)
-                {
-                    m_Players[ID].GetComponent<PlayerController>().enabled = false;
-                    uiManager.ActivateRankingHUD();
-                    Debug.Log(m_Players[ID].FinishTime);
-                }
-            }
         }
         else
         {
@@ -494,8 +511,11 @@ public class PolePositionManager : NetworkBehaviour
                 gameStarted = true;
                 if (isServer)
                 {
-                    RpcStartCountDown();
+                    timersStartTime.Add(Time.time);
+                    CheckTimerDelegate += TimerCountDown;
+                    //RpcStartCountDown();
                 }
+                uiManager.panelWaiting.gameObject.SetActive(false);
             }
         }
     }
@@ -505,15 +525,40 @@ public class PolePositionManager : NetworkBehaviour
     #region ClientRPCS
 
     [ClientRpc]
-    public void RpcNewLap(int lap, int playerID)
+    public void RpcNewLap(int lap, GameObject player)
     {
-        Debug.Log(m_Players.Count);
-        m_Players[playerID].CurrentLap = lap;
-        Debug.Log(m_Players[playerID].Name + ": " + m_Players[playerID].CurrentLap + ", " 
-            + m_Players[playerID].gameObject.GetComponent<NetworkIdentity>().isLocalPlayer);
-        if (m_Players[playerID].gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
+        PlayerInfo p_Info = player.GetComponent<PlayerInfo>();
+        p_Info.CurrentLap = lap;
+        Debug.Log(p_Info.Name + ": " + p_Info.CurrentLap + ", "
+            + player.GetComponent<NetworkIdentity>().isLocalPlayer);
+        if (player.GetComponent<NetworkIdentity>().isLocalPlayer)
         {
-            OnUpdateLapDelegate("LAP: " + m_Players[playerID].CurrentLap.ToString() + "/" + (maxLaps - 1));
+            OnUpdateLapDelegate("LAP: " + p_Info.CurrentLap.ToString() + "/" + (maxLaps - 1));
+        }
+    }
+
+    [ClientRpc]
+    public void RpcNewLapTime(float time, GameObject player)
+    {
+        PlayerInfo p_Info = player.GetComponent<PlayerInfo>();
+        p_Info.LapTime = time;
+        Debug.Log(p_Info.Name + ": " + p_Info.LapTime + ", "
+            + player.GetComponent<NetworkIdentity>().isLocalPlayer);
+        if (player.GetComponent<NetworkIdentity>().isLocalPlayer)
+        OnLapTimeDelegate(FloatToTime(p_Info.LapTime));
+    }
+
+    [ClientRpc]
+    public void RpcEndRace (float endTime, int nPlayersFinished, GameObject player)
+    {
+        PlayerInfo p_Info = player.GetComponent<PlayerInfo>();
+        p_Info.FinishTime = endTime;
+        numPlayersFinished = nPlayersFinished;
+        if (player.GetComponent<NetworkIdentity>().isLocalPlayer)
+        {
+            player.GetComponent<PlayerController>().enabled = false;
+            uiManager.ActivateRankingHUD();
+            Debug.Log(p_Info.FinishTime);
         }
     }
 

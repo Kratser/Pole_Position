@@ -21,8 +21,8 @@ namespace Mirror
         /// <param name="conn">Connection from client.</param>
         public override void OnServerAddPlayer(NetworkConnection conn)
         {
-            //lock (m_PolePositionManager.myLock) {
-
+            //lock (m_PolePositionManager.myLock) 
+            {
                 if (!m_PolePositionManager.gameStarted && m_PolePositionManager.numPlayers < 4)
                 {
                     Transform startPos = null;
@@ -49,7 +49,7 @@ namespace Mirror
 
                     NetworkServer.AddPlayerForConnection(conn, player);
                 }
-            //}
+            }
 
         }
     }
