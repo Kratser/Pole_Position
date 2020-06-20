@@ -17,7 +17,7 @@ public class CircuitController : MonoBehaviour
     void Start()
     {
         m_CircuitPath = GetComponent<LineRenderer>();
-        m_CircuitPath.enabled = false;
+        m_CircuitPath.enabled = false; // Se oculta la línea del circuito
         int numPoints = m_CircuitPath.positionCount;
         m_PathPos = new Vector3[numPoints];
         m_CumArcLength = new float[numPoints];

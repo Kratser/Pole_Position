@@ -27,7 +27,6 @@ public class SetupPlayer : NetworkBehaviour
     private NameController m_NameController;
     private PolePositionManager m_PolePositionManager;
 
-    // !! Estaría guay con materiales
     // Almacenamos los distintos prefabs que tienen los colores de los diferentes bodies
     public GameObject[] raceCarColors = new GameObject[4];
 
@@ -39,7 +38,7 @@ public class SetupPlayer : NetworkBehaviour
     /// Para que un jugador esté listo, tiene que haber introducido un nombre correcto
     /// y haber pulsado el botón de que está listo. Cuando el jugador modifica su nombre,
     /// se envía al servidor esta nueva información, y cuando está listo para empezar
-    /// también le enviamos al servidor esta información para que se lo notifique a los otro clientes
+    /// también le enviamos al servidor esta información para que se lo notifique a los otros clientes
     /// </summary>
     public void PlayerReady()
     {
@@ -62,8 +61,8 @@ public class SetupPlayer : NetworkBehaviour
     /// The Hook is always called after the property value is set. You don't need to set it yourself.
     /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
     /// </summary>
-    /// <param name="oldName"></param>
-    /// <param name="newName"></param>
+    /// <param name="oldName">Nombre del jugador antes de ser modificada la variable m_Name</param>
+    /// <param name="newName">Nombre del jugador después de ser modificada la variable m_Name</param>
     public void SetName(string oldName, string newName)
     {
         m_NameController.PlayerName.text = newName;
@@ -98,8 +97,8 @@ public class SetupPlayer : NetworkBehaviour
     /// The Hook is always called after the property value is set. You don't need to set it yourself.
     /// The Hook only fires for changed values, and changing a value in the inspector will not trigger an update.
     /// </summary>
-    /// <param name="oldColor"></param>
-    /// <param name="newColor"></param>
+    /// <param name="oldColor">color del coche del jugador antes de ser modificada la variable m_Color</param>
+    /// <param name="newColor">color del coche del jugador después de ser modificada la variable m_Color</param>
     public void SetColor(int oldColor, int newColor)
     {
         this.GetComponentInChildren<MeshRenderer>().materials = raceCarColors[newColor].GetComponent<MeshRenderer>().sharedMaterials;
@@ -118,21 +117,17 @@ public class SetupPlayer : NetworkBehaviour
     public override void OnStartServer()
     {
         base.OnStartServer();
-        // Mutex for players trying to conenct and players getting ready to start
-        Debug.LogWarning("Voy a coger mutex del servidor");
+        // Mutex para los jugadores que estén intentando entrar al mismo tiempo que un jugador trata de ponerse en listo
         m_PolePositionManager.mutex.WaitOne();
-        Debug.LogWarning("Cojo mutex del servidor");
-        //waiting new player ready
         m_ID = connectionToClient.connectionId;
-        //m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
         if (!m_PolePositionManager.gameStarted)
         {
+            // Se busca una posición disponible para colocar al jugador, y si se encuentra se inicializa y se añade a la lista
             for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
             {
                 if (!m_PolePositionManager.playersConnected[i])
                 {
                     m_PlayerInfo.ID = i;
-                    Debug.LogWarning("Id del cliente nuevo: " + m_PlayerInfo.ID);
                     m_PlayerInfo.CurrentLap = 0;
                     if (isClient)
                     {
@@ -140,7 +135,7 @@ public class SetupPlayer : NetworkBehaviour
                         m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
                         if (isLocalPlayer)
                         {
-                            m_UIManager.StartSelectMenu();
+                            m_UIManager.ActivateSelectHUD();
                         }
                     }
                     
@@ -148,9 +143,7 @@ public class SetupPlayer : NetworkBehaviour
                     this.gameObject.transform.rotation = NetworkManager.startPositions[i].rotation;
                     m_PolePositionManager.AddPlayer(m_PlayerInfo);
 
-                    Debug.LogWarning("Suelto mutex del servidor");
                     m_PolePositionManager.mutex.ReleaseMutex();
-                    Debug.LogWarning("He soltado mutex del servidor");
                     return;
                 }
             }
@@ -161,9 +154,7 @@ public class SetupPlayer : NetworkBehaviour
         {
             Debug.Log("Partida Empezada");
         }
-        Debug.LogWarning("Suelto mutex del servidor");
         m_PolePositionManager.mutex.ReleaseMutex();
-        Debug.LogWarning("He soltado mutex del servidor");
     }
 
     /// <summary>
@@ -177,6 +168,7 @@ public class SetupPlayer : NetworkBehaviour
         {
             if (!m_PolePositionManager.gameStarted)
             {
+                // Se busca una posición disponible para colocar al jugador, y si se encuentra se inicializa y se añade a la lista
                 for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
                 {
                     if (!m_PolePositionManager.playersConnected[i])
@@ -189,18 +181,20 @@ public class SetupPlayer : NetworkBehaviour
 
                         this.gameObject.transform.position = NetworkManager.startPositions[i].position;
                         this.gameObject.transform.rotation = NetworkManager.startPositions[i].rotation;
-                        // Añadir jugador a la partida
                         m_PolePositionManager.AddPlayer(m_PlayerInfo);
                         if (isLocalPlayer)
                         {
-                            m_UIManager.StartSelectMenu();
+                            m_UIManager.ActivateSelectHUD();
                         }
                         return;
                     }
                 }
                 // Si llega aquí es porque están todos los huecos ocupados
                 Debug.Log("No pueden entrar más jugadores a la partida");
-                m_UIManager.StartErrorMenu("The game is full");
+                if (isLocalPlayer)
+                {
+                    m_UIManager.StartErrorMenu("The game is full");
+                }
             }
             else
             {
@@ -214,21 +208,15 @@ public class SetupPlayer : NetworkBehaviour
     }
 
     /// <summary>
-    /// Called when the local player object has been set up.
-    /// <para>This happens after OnStartClient(), as it is triggered by an ownership message from the server.
-    /// This is an appropriate place to activate components or functionality that should only be active for the local player,
-    /// such as cameras and input.</para>
+    /// Cuando se destruye al jugador (al salir de la partida, o al cerrar el servidor) se elimina de la lista y de la partida
+    /// para el resto de jugadores
     /// </summary>
-    public override void OnStartLocalPlayer()
-    {
-    }
-
     private void OnDestroy()
     {
         m_PolePositionManager.RemovePlayer(m_PlayerInfo);
     }
 
-    #endregion
+    #endregion Start & Stop Callbacks
 
     #region START
 
@@ -255,6 +243,9 @@ public class SetupPlayer : NetworkBehaviour
 
     #region Methods
 
+    /// <summary>
+    /// Se le da control al jugador
+    /// </summary>
     public void StartPlayer()
     {
         if (isLocalPlayer)
@@ -279,7 +270,9 @@ public class SetupPlayer : NetworkBehaviour
     #endregion Methods
 
     #region Commands
-    //For security, Commands can only be sent from YOUR player object by default, so you cannot control the objects of other players.
+
+    // For security, Commands can only be sent from YOUR player object by default, 
+    // so you cannot control the objects of other players.
 
     //////////////////
     ///////NAME///////
@@ -288,7 +281,7 @@ public class SetupPlayer : NetworkBehaviour
     /// Cuando un jugador modifica su nombre se envía esta información al servidor 
     /// se modifica la variable compartida en el servidor y se comunica el cambio al resto de clientes
     /// </summary>
-    /// <param name="name"></param>
+    /// <param name="name">Nombre recibido en el command por el cliente</param>
     [Command]
     private void CmdNameToServer(string name)
     {
@@ -319,7 +312,7 @@ public class SetupPlayer : NetworkBehaviour
     /// Cuando un jugador modifica su color se envía esta información al servidor 
     /// se modifica la variable compartida en el servidor y se comunica el cambio al resto de clientes
     /// </summary>
-    /// <param name="color"></param>
+    /// <param name="color">Color recibido en el command del cliente que lo invoca</param>
     [Command]
     private void CmdColorToServer(int color)
     {

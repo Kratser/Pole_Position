@@ -7907,7 +7907,7 @@ MonoBehaviour:
   m_LineType: 0
   m_HideMobileInput: 0
   m_CharacterValidation: 0
-  m_CharacterLimit: 0
+  m_CharacterLimit: 7
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls: []
@@ -9111,12 +9111,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  playersConnected: 00000000
-  numPlayers: 0
-  minPlayers: 1
-  maxLaps: 2
   networkManager: {fileID: 0}
   uiManager: {fileID: 1823041897}
+  playersConnected: 00000000
+  numPlayers: 0
+  minPlayers: 2
+  maxLaps: 4
   m_Players: []
   m_CircuitController: {fileID: 0}
   m_DebuggingSpheres: []
@@ -9125,7 +9125,6 @@ MonoBehaviour:
   numPlayersFinished: 0
   finishOrder: []
   timersStartTime: []
-  myLock: {fileID: 0}
 --- !u!4 &1839589614
 Transform:
   m_ObjectHideFlags: 0
@@ -11148,7 +11147,6 @@ MonoBehaviour:
   autoCreatePlayer: 1
   playerSpawnMethod: 1
   spawnPrefabs: []
-  m_PolePositionManager: {fileID: 1839589613}
 --- !u!114 &2140735091
 MonoBehaviour:
   m_ObjectHideFlags: 0

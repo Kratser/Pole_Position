@@ -11,19 +11,19 @@ public class PlayerInfo : MonoBehaviour
 
     public int CurrentPosition { get; set; }
 
-    public int CurrentSegment { get; set; }
-
-    public float TotalDistance { set; get; }
-
     public int CurrentLap { get; set; }
 
     public int Color { get; set; }
+
+    public float TotalDistance { set; get; }
 
     public float StartTime { get; set; }
 
     public float FinishTime { get; set; }
 
     public float LapTime { get; set; }
+
+    public int CurrentSegment { get; set; }
 
     public bool IsReadyToStart { get; set; }
 

@@ -14,6 +14,7 @@ public class UIManager : MonoBehaviour
     public PolePositionManager m_PolePositionManager;
 
     #region Unity Canvas Variables
+
     [Header("Main Menu")] [SerializeField] private GameObject mainMenu;
     [SerializeField] private Button buttonHost;
     [SerializeField] private Button buttonClient;
@@ -52,8 +53,11 @@ public class UIManager : MonoBehaviour
 
     #endregion Unity Canvas Variables
 
+    #region Awake & Start
+
     private void Awake()
     {
+        // Se buscan las referencias del PolePositionNetworkManager y del PolePositionManager
         if (m_NetworkManager == null) m_NetworkManager = FindObjectOfType<PolePositionNetworkManager>();
         if (m_PolePositionManager == null) m_PolePositionManager = FindObjectOfType<PolePositionManager>();
     }
@@ -65,6 +69,8 @@ public class UIManager : MonoBehaviour
         buttonClient.onClick.AddListener(() => StartClient());
         buttonServer.onClick.AddListener(() => StartServer());
     }
+
+    #endregion Awake & Start
 
     #region Activate Menus
 
@@ -84,7 +90,7 @@ public class UIManager : MonoBehaviour
         inGameHUD.SetActive(true);
     }
 
-    private void ActivateSelectHUD()
+    public void ActivateSelectHUD()
     {
         mainMenu.SetActive(false);
         selectMenu.SetActive(true);
@@ -111,15 +117,7 @@ public class UIManager : MonoBehaviour
 
     #endregion Activate Menus
 
-    /// <summary>
-    /// Se inicia el menu de selección y le asignamos al botón ready 
-    /// del menú de selección la comprobación de que se haya introducido 
-    /// el campo username bien para poder empezar con la carrera
-    /// </summary>
-    public void StartSelectMenu()
-    {
-        ActivateSelectHUD();
-    }
+    #region Methods
 
     /// <summary>
     /// Se inicia el menú del servidor y asignamos al botón "close"
@@ -133,6 +131,11 @@ public class UIManager : MonoBehaviour
         Camera.main.transform.rotation = Quaternion.Euler(28, 54, 0);
     }
 
+    /// <summary>
+    /// Se activa el menú de error y asignamos al botón de "return"
+    /// la función de volver al menú inical
+    /// </summary>
+    /// <param name="errorMsg"></param>
     public void StartErrorMenu(string errorMsg)
     {
         returnButton.onClick.AddListener(() => CloseConnection());
@@ -140,6 +143,9 @@ public class UIManager : MonoBehaviour
         ActivateErrorMenu();
     }
 
+    /// <summary>
+    /// Se cierra la conexión y se reinicia el juego
+    /// </summary>
     private void CloseConnection()
     {
         m_PolePositionManager.ResetGame();
@@ -152,24 +158,26 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void CheckData()
     {
+        // Si se ha escrito un nombre válido, se inicia el HUD del juego
         if (inputFieldName.text.Length != 0)
         {
-            // Comprobar el nombre con los demás usuarios JAJA
             ActivateInGameHUD();
         }
         else
         {
-            // Mensaje "Introduce Nombre de Usuario"
+            // Mensaje "Introduce Nombre de Usuario Válido"
             errorInsertNameText.enabled = true;
         }
     }
+
+    #endregion Methods
 
     #region Start Network
 
     private void StartHost()
     {
         m_NetworkManager.StartHost();
-        StartSelectMenu();
+        ActivateSelectHUD();
     }
 
     private void StartClient()
@@ -200,9 +208,14 @@ public class UIManager : MonoBehaviour
         textSpeed.text = "Speed " + speed + " Km/h";
     }
 
+    /// <summary>
+    /// Método que se encarga de modificar el texto de la GUI que muestra 
+    /// el orden de los jugadores
+    /// </summary>
+    /// <param name="newOrder">Orden de la carrera, separando los nombres por " "</param>
     public void ChangeOrder(string newOrder)
     {
-        string[] order = newOrder.Split(' ');
+        string[] order = newOrder.Split(',');
         newOrder = "";
         for (int i = 0; i < order.Length-1; i++)
         {
@@ -211,9 +224,15 @@ public class UIManager : MonoBehaviour
         textPosition.text = newOrder;
         
     }
+
+    /// <summary>
+    /// Método que se encarga de modificar el texto de la GUI que muestra
+    /// el orden de los jugadores en el servidor
+    /// </summary>
+    /// <param name="newOrder">Orden de la carrera, separando los nombres por " "</param>
     public void ChangeOrderServer(string newOrder)
     {
-        string[] order = newOrder.Split(' ');
+        string[] order = newOrder.Split(',');
         newOrder = "";
         for (int i = 0; i < order.Length-1; i++)
         {
@@ -222,16 +241,28 @@ public class UIManager : MonoBehaviour
         textOrder.text = newOrder;
     }
 
+    /// <summary>
+    /// Método que modifica el texto de cuenta atrás
+    /// </summary>
+    /// <param name="time">string que muestra la cuenta atrás</param>
     public void CountDown(string time)
     {
         textCountDown.text = time;
     }
 
+    /// <summary>
+    /// Método que modifica el texto que indica la vuelta del jugador
+    /// </summary>
+    /// <param name="laps">string que contiene el siguiente formato: "LAP: vuelta / vueltaMax"</param>
     public void UpdateLap (string laps)
     {
         textLaps.text = laps;
     }
 
+    /// <summary>
+    /// Texto emergente que aparece si el jugador va en dirección conraria
+    /// </summary>
+    /// <param name="msg">Mensaje de error</param>
     public void WrongDirection(string msg)
     {
         textCountDown.fontSize = 45;
@@ -241,6 +272,12 @@ public class UIManager : MonoBehaviour
         textCountDown.fontSize = 100;
     }
 
+    /// <summary>
+    /// Método que modifica el HUD del ranking cuando todos los jugadores han acabado la carrera,
+    /// mostrando las posiciones y los tiempos totales
+    /// </summary>
+    /// <param name="positions">Vector con las posiciones</param>
+    /// <param name="times">Vector con los tiempos totales de los jugadores</param>
     public void ChangeRankingHUD(string[] positions, string[] times)
     {
         exitButton.onClick.AddListener(() => CloseConnection());
@@ -264,6 +301,9 @@ public class UIManager : MonoBehaviour
         textTimes.text = timesText;
     }
 
+    /// <summary>
+    /// Método que se encarga de reiniciar el HUD del ranking a su estado normal
+    /// </summary>
     public void ResetRankingHUD()
     {
         textFinish.fontSize = 100;
@@ -276,11 +316,20 @@ public class UIManager : MonoBehaviour
         textTimes.text = "--:--:--";
     }
 
+    /// <summary>
+    /// Método que muestra un mensaje para dar la vuelta al jugador
+    /// en caso de que se vuelque el coche
+    /// </summary>
+    /// <param name="msg">Mensaje de error</param>
     public void ShowCrashError(string msg)
     {
         textCountDown.text = msg;
     }
 
+    /// <summary>
+    /// Método que modifica el texto que muestra el tiempo por vuelta del jugador
+    /// </summary>
+    /// <param name="time">Tiempo por vuelta</param>
     public void UpdateTimeLap (string time)
     {
         textTimeLaps.text = time;

@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 public class NameController : MonoBehaviour
 {
-
     // Texto que aparece sobre el coche del juegador
     public Text PlayerName;
+    // Altura a la que se muestra el texto sobre el jugador
     public float height = 55;
 
     // Update is called once per frame

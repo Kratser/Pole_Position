@@ -61,6 +61,9 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Se devuelve la cámara a su posición inical del juego
+    /// </summary>
     public void ResetCamera()
     {
         this.transform.position = new Vector3(0.0f, 2.82f, -10.0f);

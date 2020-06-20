@@ -44,7 +44,6 @@ public class PlayerController : NetworkBehaviour
             if (Math.Abs(m_CurrentSpeed - value) < float.Epsilon)
             {
                 return;
-                m_CurrentSpeed = 0.0f;
             }
             m_CurrentSpeed = value;
             // Si el delegado tiene alguna función asociada (void Func(float valor);)
