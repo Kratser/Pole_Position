@@ -514,6 +514,7 @@ public class PolePositionManager : NetworkBehaviour
 
     public void NewPlayerReady(GameObject player)
     {
+        mutex.WaitOne();
         PlayerInfo playerInfo = player.GetComponent<PlayerInfo>();
         playerInfo.IsReadyToStart = true;
         numPlayersReady++;
@@ -531,6 +532,7 @@ public class PolePositionManager : NetworkBehaviour
                 }
             }    
         }
+        mutex.ReleaseMutex();
     }
 
     #endregion Commands

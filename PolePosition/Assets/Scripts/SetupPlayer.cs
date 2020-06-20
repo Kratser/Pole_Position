@@ -57,7 +57,7 @@ public class SetupPlayer : NetworkBehaviour
         }
     }
 
-   
+
 
     /// <summary>
     /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
@@ -134,6 +134,8 @@ public class SetupPlayer : NetworkBehaviour
                         m_PlayerInfo.ID = i;
                         Debug.LogWarning("Id del cliente nuevo: " + m_PlayerInfo.ID);
                         m_PlayerInfo.CurrentLap = 0;
+                        this.gameObject.transform.position = NetworkManager.startPositions[i].position;
+                        this.gameObject.transform.rotation = NetworkManager.startPositions[i].rotation;
                         m_PolePositionManager.AddPlayer(m_PlayerInfo);
                         return;
                     }
@@ -168,6 +170,8 @@ public class SetupPlayer : NetworkBehaviour
                     m_UIManager.readyButton.onClick.AddListener(() => PlayerReady());
                     m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
 
+                    this.gameObject.transform.position = NetworkManager.startPositions[i].position;
+                    this.gameObject.transform.rotation = NetworkManager.startPositions[i].rotation;
                     // Añadir jugador a la partida
                     m_PolePositionManager.AddPlayer(m_PlayerInfo);
                     if (isLocalPlayer)
@@ -288,11 +292,8 @@ public class SetupPlayer : NetworkBehaviour
     [Command]
     public void CmdNewPlayerReady()
     {
-        //lock (m_PolePositionManager.myLock)
-        {
-            GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-            m_PolePositionManager.NewPlayerReady(this.gameObject);
-        }
+        GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+        m_PolePositionManager.NewPlayerReady(this.gameObject);
     }
 
     //////////////////

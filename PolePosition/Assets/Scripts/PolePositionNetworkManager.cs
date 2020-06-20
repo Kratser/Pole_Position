@@ -21,36 +21,40 @@ namespace Mirror
         /// <param name="conn">Connection from client.</param>
         public override void OnServerAddPlayer(NetworkConnection conn)
         {
-            //lock (m_PolePositionManager.myLock) 
-            {
-                if (!m_PolePositionManager.gameStarted && m_PolePositionManager.numPlayers < 4)
-                {
-                    Transform startPos = null;
-                    for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
-                    {
-                        if (!m_PolePositionManager.playersConnected[i])
-                        {
-                            startPos = startPositions[i];
-                            break;
-                        }
-                    }
+            GameObject player = Instantiate(playerPrefab);
 
-                    GameObject player = startPos != null
-                        ? Instantiate(playerPrefab, startPos.position, startPos.rotation)
-                        : Instantiate(playerPrefab);
+            NetworkServer.AddPlayerForConnection(conn, player);
 
-                    NetworkServer.AddPlayerForConnection(conn, player);
-                }
-                else
-                {
-                    GameObject player = Instantiate(playerPrefab);
+            //    m_PolePositionManager.mutex.WaitOne();
 
-                    player.SetActive(false);
+            //    if (!m_PolePositionManager.gameStarted && m_PolePositionManager.numPlayers < 4)
+            //    {
+            //        Transform startPos = null;
+            //        for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
+            //        {
+            //            if (!m_PolePositionManager.playersConnected[i])
+            //            {
+            //                startPos = startPositions[i];
+            //                break;
+            //            }
+            //        }
 
-                    NetworkServer.AddPlayerForConnection(conn, player);
-                }
-            }
+            //        GameObject player = startPos != null
+            //            ? Instantiate(playerPrefab, startPos.position, startPos.rotation)
+            //            : Instantiate(playerPrefab);
 
+            //        NetworkServer.AddPlayerForConnection(conn, player);
+            //    }
+            //    else
+            //    {
+            //        GameObject player = Instantiate(playerPrefab);
+
+            //        player.SetActive(false);
+
+            //        NetworkServer.AddPlayerForConnection(conn, player);
+            //    }
+
+            //    m_PolePositionManager.mutex.ReleaseMutex();
         }
     }
 }
