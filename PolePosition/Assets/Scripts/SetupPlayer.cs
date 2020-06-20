@@ -57,8 +57,6 @@ public class SetupPlayer : NetworkBehaviour
         }
     }
 
-
-
     /// <summary>
     /// The Hook method must have two parameters of the same type as the SyncVar property. One for the old value, one for the new value.
     /// The Hook is always called after the property value is set. You don't need to set it yourself.
@@ -120,34 +118,52 @@ public class SetupPlayer : NetworkBehaviour
     public override void OnStartServer()
     {
         base.OnStartServer();
+        // Mutex for players trying to conenct and players getting ready to start
+        Debug.LogWarning("Voy a coger mutex del servidor");
+        m_PolePositionManager.mutex.WaitOne();
+        Debug.LogWarning("Cojo mutex del servidor");
+        //waiting new player ready
         m_ID = connectionToClient.connectionId;
-
-        if (isServerOnly)
+        //m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
+        if (!m_PolePositionManager.gameStarted)
         {
-            //m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
-            if (!m_PolePositionManager.gameStarted)
+            for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
             {
-                for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
+                if (!m_PolePositionManager.playersConnected[i])
                 {
-                    if (!m_PolePositionManager.playersConnected[i])
+                    m_PlayerInfo.ID = i;
+                    Debug.LogWarning("Id del cliente nuevo: " + m_PlayerInfo.ID);
+                    m_PlayerInfo.CurrentLap = 0;
+                    if (isClient)
                     {
-                        m_PlayerInfo.ID = i;
-                        Debug.LogWarning("Id del cliente nuevo: " + m_PlayerInfo.ID);
-                        m_PlayerInfo.CurrentLap = 0;
-                        this.gameObject.transform.position = NetworkManager.startPositions[i].position;
-                        this.gameObject.transform.rotation = NetworkManager.startPositions[i].rotation;
-                        m_PolePositionManager.AddPlayer(m_PlayerInfo);
-                        return;
+                        m_UIManager.readyButton.onClick.AddListener(() => PlayerReady());
+                        m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
+                        if (isLocalPlayer)
+                        {
+                            m_UIManager.StartSelectMenu();
+                        }
                     }
+                    
+                    this.gameObject.transform.position = NetworkManager.startPositions[i].position;
+                    this.gameObject.transform.rotation = NetworkManager.startPositions[i].rotation;
+                    m_PolePositionManager.AddPlayer(m_PlayerInfo);
+
+                    Debug.LogWarning("Suelto mutex del servidor");
+                    m_PolePositionManager.mutex.ReleaseMutex();
+                    Debug.LogWarning("He soltado mutex del servidor");
+                    return;
                 }
-                // Si llega aquí es porque están todos los huecos ocupados
-                Debug.Log("No pueden entrar más jugadores a la partida");
             }
-            else
-            {
-                Debug.Log("Partida Empezada");
-            }
+            // Si llega aquí es porque están todos los huecos ocupados
+            Debug.Log("No pueden entrar más jugadores a la partida");
         }
+        else
+        {
+            Debug.Log("Partida Empezada");
+        }
+        Debug.LogWarning("Suelto mutex del servidor");
+        m_PolePositionManager.mutex.ReleaseMutex();
+        Debug.LogWarning("He soltado mutex del servidor");
     }
 
     /// <summary>
@@ -157,44 +173,44 @@ public class SetupPlayer : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        //m_PlayerInfo.ID = m_PolePositionManager.numPlayers;
-        if (!m_PolePositionManager.gameStarted)
+        if (isClientOnly)
         {
-            for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
+            if (!m_PolePositionManager.gameStarted)
             {
-                if (!m_PolePositionManager.playersConnected[i])
+                for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
                 {
-                    m_PlayerInfo.ID = i;
-                    m_PlayerInfo.CurrentLap = 0;
-
-                    m_UIManager.readyButton.onClick.AddListener(() => PlayerReady());
-                    m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
-
-                    this.gameObject.transform.position = NetworkManager.startPositions[i].position;
-                    this.gameObject.transform.rotation = NetworkManager.startPositions[i].rotation;
-                    // Añadir jugador a la partida
-                    m_PolePositionManager.AddPlayer(m_PlayerInfo);
-                    if (isLocalPlayer)
+                    if (!m_PolePositionManager.playersConnected[i])
                     {
-                        m_UIManager.StartSelectMenu();
+                        m_PlayerInfo.ID = i;
+                        m_PlayerInfo.CurrentLap = 0;
+
+                        m_UIManager.readyButton.onClick.AddListener(() => PlayerReady());
+                        m_UIManager.changeColorButton.onClick.AddListener(() => ChangeColor());
+
+                        this.gameObject.transform.position = NetworkManager.startPositions[i].position;
+                        this.gameObject.transform.rotation = NetworkManager.startPositions[i].rotation;
+                        // Añadir jugador a la partida
+                        m_PolePositionManager.AddPlayer(m_PlayerInfo);
+                        if (isLocalPlayer)
+                        {
+                            m_UIManager.StartSelectMenu();
+                        }
+                        return;
                     }
-                    return;
+                }
+                // Si llega aquí es porque están todos los huecos ocupados
+                Debug.Log("No pueden entrar más jugadores a la partida");
+                m_UIManager.StartErrorMenu("The game is full");
+            }
+            else
+            {
+                if (isLocalPlayer)
+                {
+                    Debug.Log("Partida Empezada");
+                    m_UIManager.StartErrorMenu("The game has already started");
                 }
             }
-            // Si llega aquí es porque están todos los huecos ocupados
-            Debug.Log("No pueden entrar más jugadores a la partida");
-            m_UIManager.StartErrorMenu("The game is full");
         }
-        else
-        {
-            if (isLocalPlayer)
-            {
-                Debug.Log("Partida Empezada");
-                m_UIManager.StartErrorMenu("The game has already started");
-            }
-        }
-
-
     }
 
     /// <summary>
@@ -210,7 +226,6 @@ public class SetupPlayer : NetworkBehaviour
     private void OnDestroy()
     {
         m_PolePositionManager.RemovePlayer(m_PlayerInfo);
-        //m_UIManager.ActivateMainMenu();
     }
 
     #endregion
@@ -313,4 +328,5 @@ public class SetupPlayer : NetworkBehaviour
     }
 
     #endregion Commands
+
 }

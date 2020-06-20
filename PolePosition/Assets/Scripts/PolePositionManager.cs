@@ -96,21 +96,6 @@ public class PolePositionManager : NetworkBehaviour
         UpdateRaceProgress();
     }
 
-    public override void OnStartClient()
-    {
-        /*
-        if (gameStarted)
-        {
-            Debug.Log("F");
-            NetworkManager.singleton.StopClient();
-        }
-        else
-        {
-            uiManager.StartSelectMenu();
-        }
-        */
-    }
-
     #endregion Start And Update
 
     #region Add and Remove Players
@@ -514,7 +499,9 @@ public class PolePositionManager : NetworkBehaviour
 
     public void NewPlayerReady(GameObject player)
     {
+        Debug.LogWarning("Voy a coger mutex del servidor");
         mutex.WaitOne();
+        Debug.LogWarning("Cojo mutex del servidor");
         PlayerInfo playerInfo = player.GetComponent<PlayerInfo>();
         playerInfo.IsReadyToStart = true;
         numPlayersReady++;
@@ -528,11 +515,12 @@ public class PolePositionManager : NetworkBehaviour
                 {
                     timersStartTime.Add(Time.time);
                     CheckTimerDelegate += TimerCountDown;
-                    //RpcStartCountDown();
                 }
             }    
         }
+        Debug.LogWarning("Suelto mutex del servidor");
         mutex.ReleaseMutex();
+        Debug.LogWarning("He soltado mutex del servidor");
     }
 
     #endregion Commands
