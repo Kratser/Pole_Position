@@ -47,8 +47,6 @@ public class PolePositionManager : NetworkBehaviour
     public CheckTimerEvent CheckTimerDelegate;
     public List<float> timersStartTime = new List<float>();
 
-    public UnityEngine.Object myLock = new UnityEngine.Object();
-
     public Mutex mutex = new Mutex();
 
     #endregion Variables
@@ -125,7 +123,7 @@ public class PolePositionManager : NetworkBehaviour
         
         if (playerRemoved)
         {
-            UnityEngine.Debug.LogWarning("Jugador eliminado");
+            Debug.LogWarning("Jugador eliminado");
             CheckPlayersRemoved(player);
         }
     }
@@ -145,8 +143,14 @@ public class PolePositionManager : NetworkBehaviour
         playersConnected[player.ID] = false;
         if (numPlayers <= 1)
         {
-            uiManager.StartErrorMenu("The other players have left the game");
-            //ResetGame();
+            try
+            {
+                uiManager.StartErrorMenu("The other players have left the game");
+            }
+            catch(Exception e)
+            {
+                Debug.Log(e);
+            } 
         }
         else
         {
@@ -366,14 +370,15 @@ public class PolePositionManager : NetworkBehaviour
 
         this.m_DebuggingSpheres[ID].transform.position = carProj;
 
-        float distance = minArcL - m_Players[ID].TotalDistance;
-
         if (check)
         {
-            CheckLaps(ID, distance, minArcL, segIdx);
+            CheckLaps(ID, minArcL, segIdx);
 
             CheckDirection(ID, segIdx);
         }
+
+        m_Players[ID].TotalDistance = minArcL;
+
         return segIdx;
     }
 
@@ -383,7 +388,7 @@ public class PolePositionManager : NetworkBehaviour
     /// <param name="ID">Id del jugador dentro de la lista m_Players</param>
     /// <param name="distance">Distancia recorrida desde el update anterior</param>
     /// <param name="minArcL">Distancia de la meta al jugador</param>
-    public void CheckLaps(int ID, float distance, float minArcL, int segIdx)
+    public void CheckLaps(int ID, float minArcL, int segIdx)
     {
         // Vuelta hacia atrás
         if (m_Players[ID].CurrentSegment - segIdx == -(m_CircuitController.m_CircuitPath.positionCount - 2) /*distance > 300*/)
@@ -391,7 +396,7 @@ public class PolePositionManager : NetworkBehaviour
             if (isServer)
             {
                 m_Players[ID].CurrentLap--;
-                
+
                 RpcNewLap(m_Players[ID].CurrentLap, m_Players[ID].gameObject);
 
                 // Para que no empiece en una vuelta menor que 0, y que no se puedan acumular vueltas negativas
@@ -437,12 +442,6 @@ public class PolePositionManager : NetworkBehaviour
                     }
                 }
             }
-            m_Players[ID].TotalDistance = minArcL;
-            distance = minArcL;
-        }
-        else
-        {
-            m_Players[ID].TotalDistance += distance;
         }
     }
 

@@ -279,6 +279,7 @@ public class SetupPlayer : NetworkBehaviour
     #endregion Methods
 
     #region Commands
+    //For security, Commands can only be sent from YOUR player object by default, so you cannot control the objects of other players.
 
     //////////////////
     ///////NAME///////
