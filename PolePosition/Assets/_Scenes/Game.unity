@@ -9114,7 +9114,7 @@ MonoBehaviour:
   playersConnected: 00000000
   numPlayers: 0
   minPlayers: 1
-  maxLaps: 4
+  maxLaps: 2
   networkManager: {fileID: 0}
   uiManager: {fileID: 1823041897}
   m_Players: []
@@ -9123,6 +9123,7 @@ MonoBehaviour:
   numPlayersReady: 0
   gameStarted: 0
   numPlayersFinished: 0
+  finishOrder: []
   timersStartTime: []
   myLock: {fileID: 0}
 --- !u!4 &1839589614

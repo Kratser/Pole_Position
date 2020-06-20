@@ -74,17 +74,17 @@ public class PlayerController : NetworkBehaviour
 
     public void Update()
     {
-        //InputAcceleration = Input.GetAxis("Vertical");
-        //InputSteering = Input.GetAxis("Horizontal");
-        //InputBrake = Input.GetAxis("Jump");
+        InputAcceleration = Input.GetAxis("Vertical");
+        InputSteering = Input.GetAxis("Horizontal");
+        InputBrake = Input.GetAxis("Jump");
         Speed = m_Rigidbody.velocity.magnitude;
     }
 
     public void FixedUpdate()
     {
-        InputAcceleration = Mathf.Clamp(Input.GetAxis("Vertical"), -1, 1);
-        InputSteering = Mathf.Clamp(Input.GetAxis("Horizontal"), -1, 1);
-        InputBrake = Mathf.Clamp(Input.GetAxis("Jump"), 0, 1);
+        InputAcceleration = Mathf.Clamp(InputAcceleration, -1, 1);
+        InputSteering = Mathf.Clamp(InputSteering, -1, 1);
+        InputBrake = Mathf.Clamp(InputBrake, 0, 1);
 
         // Para resetear la posición del jugador si ha volcado, se debe pulsar la barra espaciadora
         if (Input.GetKey(KeyCode.Space))
