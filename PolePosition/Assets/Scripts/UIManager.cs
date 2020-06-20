@@ -264,7 +264,7 @@ public class UIManager : MonoBehaviour
         textTimes.text = timesText;
     }
 
-    public void ResetRnakingHUD()
+    public void ResetRankingHUD()
     {
         textFinish.fontSize = 100;
         textFinish.text = "Finish";

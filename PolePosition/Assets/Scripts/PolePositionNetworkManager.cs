@@ -12,8 +12,6 @@ namespace Mirror
     public class PolePositionNetworkManager : NetworkManager
     {
 
-        public PolePositionManager m_PolePositionManager;
-
         /// <summary>
         /// Called on the server when a client adds a new player with ClientScene.AddPlayer.
         /// <para>The default implementation for this function creates a new player object from the playerPrefab.</para>
@@ -22,39 +20,7 @@ namespace Mirror
         public override void OnServerAddPlayer(NetworkConnection conn)
         {
             GameObject player = Instantiate(playerPrefab);
-
             NetworkServer.AddPlayerForConnection(conn, player);
-
-            //    m_PolePositionManager.mutex.WaitOne();
-
-            //    if (!m_PolePositionManager.gameStarted && m_PolePositionManager.numPlayers < 4)
-            //    {
-            //        Transform startPos = null;
-            //        for (int i = 0; i < m_PolePositionManager.playersConnected.Length; i++)
-            //        {
-            //            if (!m_PolePositionManager.playersConnected[i])
-            //            {
-            //                startPos = startPositions[i];
-            //                break;
-            //            }
-            //        }
-
-            //        GameObject player = startPos != null
-            //            ? Instantiate(playerPrefab, startPos.position, startPos.rotation)
-            //            : Instantiate(playerPrefab);
-
-            //        NetworkServer.AddPlayerForConnection(conn, player);
-            //    }
-            //    else
-            //    {
-            //        GameObject player = Instantiate(playerPrefab);
-
-            //        player.SetActive(false);
-
-            //        NetworkServer.AddPlayerForConnection(conn, player);
-            //    }
-
-            //    m_PolePositionManager.mutex.ReleaseMutex();
         }
     }
 }

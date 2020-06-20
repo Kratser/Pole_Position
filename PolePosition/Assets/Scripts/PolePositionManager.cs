@@ -75,6 +75,7 @@ public class PolePositionManager : NetworkBehaviour
         {
             m_DebuggingSpheres[i] = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             m_DebuggingSpheres[i].GetComponent<SphereCollider>().enabled = false;
+            m_DebuggingSpheres[i].GetComponent<MeshRenderer>().enabled = false;
         }
         for (int i = 0; i < playersConnected.Length; i++)
         {
@@ -176,18 +177,18 @@ public class PolePositionManager : NetworkBehaviour
                 if (isServerOnly)
                 {
                     NetworkManager.singleton.StopServer();
-                    UnityEngine.Debug.LogWarning("Se ha quedado el servidor solo");
+                    Debug.LogWarning("Se ha quedado el servidor solo");
                 }
                 else
                 {
                     NetworkManager.singleton.StopHost();
-                    UnityEngine.Debug.LogWarning("Se ha quedado el host solo");
+                    Debug.LogWarning("Se ha quedado el host solo");
                 }
             }
             else
             {
                 NetworkManager.singleton.StopClient();
-                UnityEngine.Debug.LogWarning("Se ha cerrado el servidor");
+                Debug.LogWarning("Se ha cerrado el servidor");
             }
 
             m_Players.Clear();
@@ -201,7 +202,7 @@ public class PolePositionManager : NetworkBehaviour
             OnUpdateLapDelegate("LAP: 0/" + (maxLaps - 1));
             OnWrongDirectionDelegate("");
             OnLapTimeDelegate("--:--:--");
-            uiManager.ResetRnakingHUD();
+            uiManager.ResetRankingHUD();
             gameStarted = false;
             for (int i = 0; i < playersConnected.Length; i++)
             {
@@ -212,7 +213,7 @@ public class PolePositionManager : NetworkBehaviour
             uiManager.ActivateMainMenu();
         }
         catch(Exception ex){
-            UnityEngine.Debug.Log(ex);
+            Debug.Log(ex);
         }
     }
 
@@ -306,15 +307,6 @@ public class PolePositionManager : NetworkBehaviour
             }
         }
         OnOrderChangeDelegate(myRaceOrder);
-        /*
-       for (int i = 0; i < m_Players.Count; i++)
-       {
-            if (m_Players[i].gameObject.GetComponent<SetupPlayer>().isLocalPlayer && m_Players[i].CurrentLap > 0)
-            {
-                OnLapTimeDelegate(FloatToTime(Time.time - m_Players[i].LapTime));
-            }
-        }
-        */
 
         /* 
          * Cuando han terminado todos los jugadores menos el último activamos el HUD
