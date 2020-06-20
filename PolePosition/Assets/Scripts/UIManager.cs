@@ -264,6 +264,18 @@ public class UIManager : MonoBehaviour
         textTimes.text = timesText;
     }
 
+    public void ResetRnakingHUD()
+    {
+        textFinish.fontSize = 100;
+        textFinish.text = "Finish";
+        exitButton.gameObject.SetActive(false);
+        textWaitingPlayers.gameObject.SetActive(true);
+        textRanking.gameObject.SetActive(false);
+        textTimes.gameObject.SetActive(false);
+        textRanking.text = "";
+        textTimes.text = "--:--:--";
+    }
+
     public void ShowCrashError(string msg)
     {
         textCountDown.text = msg;

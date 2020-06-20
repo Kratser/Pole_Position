@@ -17,7 +17,7 @@ public class CircuitController : MonoBehaviour
     void Start()
     {
         m_CircuitPath = GetComponent<LineRenderer>();
-
+        m_CircuitPath.enabled = false;
         int numPoints = m_CircuitPath.positionCount;
         m_PathPos = new Vector3[numPoints];
         m_CumArcLength = new float[numPoints];

@@ -170,7 +170,6 @@ public class PolePositionManager : NetworkBehaviour
     /// </summary>
     public void ResetGame()
     {
-
         try {
             if (isServer)
             {
@@ -202,7 +201,7 @@ public class PolePositionManager : NetworkBehaviour
             OnUpdateLapDelegate("LAP: 0/" + (maxLaps - 1));
             OnWrongDirectionDelegate("");
             OnLapTimeDelegate("--:--:--");
-
+            uiManager.ResetRnakingHUD();
             gameStarted = false;
             for (int i = 0; i < playersConnected.Length; i++)
             {
